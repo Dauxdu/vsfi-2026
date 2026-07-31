@@ -6,7 +6,7 @@ services:
       MODEL_PATH: "/app/model/risk_model.joblib"
       META_PATH: "/app/model/meta.json"
     networks:
-      - traefik-public
+      - backend-internal
     healthcheck:
       test:
         - CMD
@@ -33,5 +33,5 @@ services:
         failure_action: rollback
 
 networks:
-  traefik-public:
+  backend-internal:
     external: true

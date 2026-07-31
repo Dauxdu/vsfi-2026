@@ -9,8 +9,8 @@ services:
       LOG_FORMAT: "{{ backend_log_format }}"
       ML_RISK_URL: "{{ backend_ml_risk_url }}"
     networks:
-      - traefik-public
-      - postgres-internal
+      - frontend-internal
+      - backend-internal
     deploy:
       replicas: 1
       placement:
@@ -35,8 +35,8 @@ services:
     volumes:
       - telemetry_data:/var/app/data
     networks:
-      - traefik-public
-      - postgres-internal
+      - frontend-internal
+      - backend-internal
     deploy:
       replicas: 1
       placement:
@@ -56,7 +56,7 @@ volumes:
   telemetry_data:
 
 networks:
-  traefik-public:
+  frontend-internal:
     external: true
-  postgres-internal:
+  backend-internal:
     external: true
