@@ -1,8 +1,6 @@
 services:
   vault:
     image: hashicorp/vault:{{ vault_image_tag }}
-    ports:
-      - "127.0.0.1:{{ vault_port }}:{{ vault_port }}/tcp"
     command: server
     cap_add:
       - IPC_LOCK
@@ -33,6 +31,8 @@ services:
       - vault_data:/vault/file
     networks:
       - traefik-public
+    ports:
+      - "127.0.0.1:{{ vault_port }}:{{ vault_port }}/tcp"
     deploy:
       labels:
         - "traefik.enable=true"

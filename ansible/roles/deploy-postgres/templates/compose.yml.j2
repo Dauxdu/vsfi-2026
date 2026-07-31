@@ -11,6 +11,11 @@ services:
       - {{ postgres_data_path }}/init-scripts:/docker-entrypoint-initdb.d:ro
     networks:
       - postgres-internal
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U {{ postgres_user }}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     deploy:
       placement:
         constraints:
@@ -19,11 +24,6 @@ services:
         condition: on-failure
         delay: 10s
         max_attempts: 5
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U {{ postgres_user }}"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
 
 volumes:
   postgres_data:

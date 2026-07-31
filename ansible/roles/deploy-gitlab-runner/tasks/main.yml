@@ -128,12 +128,12 @@
       --token "{{ gitlab_runner_token }}"
       --description "{{ gitlab_runner_description }}"
       --executor "{{ gitlab_runner_executor }}"
+  changed_when: true
   when:
     - gitlab_runner_token | default('') | trim | length > 0
     - runner_verify.rc != 0
-  no_log: true
-  changed_when: true
   notify: Restart gitlab-runner
+  no_log: true
 
 - name: Generate GitLab Runner configuration
   ansible.builtin.template:

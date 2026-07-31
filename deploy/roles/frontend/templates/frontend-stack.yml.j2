@@ -6,9 +6,6 @@ services:
       - frontend-internal
     deploy:
       replicas: 1
-      placement:
-        constraints:
-          - node.hostname == app1
       labels:
         - "traefik.enable=true"
         - "traefik.http.routers.frontend.rule=Host(`{{ frontend_domain }}`)"
@@ -16,6 +13,9 @@ services:
         - "traefik.http.routers.frontend.tls=true"
         - "traefik.http.services.frontend.loadbalancer.server.port=80"
         - "traefik.swarm.network=traefik-public"
+      placement:
+        constraints:
+          - node.hostname == app1
       restart_policy:
         condition: on-failure
         delay: 5s

@@ -1,10 +1,10 @@
 services:
   nexus:
     image: sonatype/nexus3:{{ nexus_image_tag }}
-    networks:
-      - traefik-public
     volumes:
       - nexus_data:/nexus-data
+    networks:
+      - traefik-public
     deploy:
       labels:
         - "traefik.enable=true"

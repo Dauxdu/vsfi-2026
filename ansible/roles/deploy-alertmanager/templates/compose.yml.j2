@@ -5,12 +5,12 @@ services:
       - '--config.file=/etc/alertmanager/config.yml'
       - '--storage.path=/alertmanager'
       - '--web.external-url=https://{{ alertmanager_domain }}'
-    volumes:
-      - "{{ alertmanager_data_path }}/config.yml:/etc/alertmanager/config.yml:ro"
-      - alertmanager_data:/alertmanager
     networks:
       - traefik-public
       - grafana-private
+    volumes:
+      - "{{ alertmanager_data_path }}/config.yml:/etc/alertmanager/config.yml:ro"
+      - alertmanager_data:/alertmanager
     deploy:
       labels:
         - "traefik.enable=true"

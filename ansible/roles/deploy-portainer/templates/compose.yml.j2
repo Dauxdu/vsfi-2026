@@ -1,13 +1,13 @@
 services:
   portainer:
     image: portainer/portainer-ce:{{ portainer_image_tag }}
-    ports:
-      - "{{ portainer_https_port }}:9443/tcp"
     volumes:
       - portainer_data:/data
       - /var/run/docker.sock:/var/run/docker.sock:ro
     networks:
       - traefik-public
+    ports:
+      - "{{ portainer_https_port }}:9443/tcp"
     deploy:
       labels:
         - "traefik.enable=true"

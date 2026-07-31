@@ -1,9 +1,6 @@
 services:
   traefik:
     image: traefik:{{ traefik_image_tag }}
-    ports:
-      - "80:80/tcp"
-      - "443:443/tcp"
     volumes:
       - {{ traefik_data_path }}/certs:/certs:ro
       - {{ traefik_data_path }}/dynamic:/etc/traefik/dynamic:ro
@@ -11,6 +8,9 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock:ro
     networks:
       - traefik-public
+    ports:
+      - "80:80/tcp"
+      - "443:443/tcp"
     deploy:
       placement:
         constraints:
