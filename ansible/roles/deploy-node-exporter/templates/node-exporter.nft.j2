@@ -1,0 +1,4 @@
+# {{ ansible_managed }}
+
+# Node-exporter
+ip saddr { {{ groups['mntr'] | map('extract', hostvars, 'ansible_host') | list | join(', ') }} } tcp dport {{ node_exporter_port }} accept;

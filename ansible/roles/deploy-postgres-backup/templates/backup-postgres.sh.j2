@@ -1,0 +1,64 @@
+#!/bin/bash
+# {{ ansible_managed }}
+set -euo pipefail
+
+DATE=$(date +%Y%m%d_%H%M%S)
+RCLONE_REMOTE="rustfs"
+S3_BUCKET="{{ s3_bucket }}"
+BACKUP_DIR="{{ backup_data_path }}/tmp"
+RETENTION_DAYS="{{ backup_retention_days }}"
+GPG_PASSPHRASE="{{ backup_encryption_key | default('') }}"
+
+CONTAINER_ID=$(docker ps -q -f "name={{ postgres_container_name }}" | head -n 1)
+
+if [ -z "${CONTAINER_ID}" ]; then
+    echo "ERROR: PostgreSQL container not found!"
+    exit 1
+fi
+
+mkdir -p "${BACKUP_DIR}"
+
+echo "[$(date)] Ensuring S3 bucket exists..."
+rclone mkdir "${RCLONE_REMOTE}:${S3_BUCKET}"
+
+echo "=== [$(date)] Starting PostgreSQL backup ==="
+
+{% for db in backup_databases %}
+echo "[$(date)] Backing up database: {{ db }}"
+BACKUP_FILE="${BACKUP_DIR}/{{ db }}_${DATE}.sql.gz"
+
+docker exec -i "${CONTAINER_ID}" pg_dump -U postgres -d "{{ db }}" | gzip > "${BACKUP_FILE}"
+
+if [ -f "${BACKUP_FILE}" ] && [ -s "${BACKUP_FILE}" ]; then
+    FILE_SIZE=$(du -h "${BACKUP_FILE}" | cut -f1)
+    echo "[$(date)] Backup created: ${BACKUP_FILE} (${FILE_SIZE})"
+
+{% if vault_backup_encryption_key is defined and vault_backup_encryption_key | length > 0 %}
+    # Encrypt backup with GPG symmetric encryption
+    ENCRYPTED_FILE="${BACKUP_FILE}.gpg"
+    gpg --batch --yes --symmetric --cipher-algo AES256 \
+        --passphrase "${GPG_PASSPHRASE}" \
+        --output "${ENCRYPTED_FILE}" "${BACKUP_FILE}"
+    rm -f "${BACKUP_FILE}"
+    UPLOAD_FILE="${ENCRYPTED_FILE}"
+    REMOTE_NAME="{{ db }}/${DATE}.sql.gz.gpg"
+    echo "[$(date)] Backup encrypted: ${ENCRYPTED_FILE}"
+{% else %}
+    UPLOAD_FILE="${BACKUP_FILE}"
+    REMOTE_NAME="{{ db }}/${DATE}.sql.gz"
+{% endif %}
+
+    rclone copyto "${UPLOAD_FILE}" "${RCLONE_REMOTE}:${S3_BUCKET}/${REMOTE_NAME}"
+    echo "[$(date)] Uploaded: ${RCLONE_REMOTE}:${S3_BUCKET}/${REMOTE_NAME}"
+else
+    echo "ERROR: Backup file is empty or missing for {{ db }}"
+    exit 1
+fi
+{% endfor %}
+
+find "${BACKUP_DIR}" -name "*.sql.gz*" -mtime +1 -delete
+
+echo "[$(date)] Cleaning S3 backups older than ${RETENTION_DAYS} days"
+rclone delete "${RCLONE_REMOTE}:${S3_BUCKET}" --min-age "${RETENTION_DAYS}d"
+
+echo "=== [$(date)] Backup completed successfully ==="

@@ -1,0 +1,4 @@
+---
+prometheus_domain: "prom.localhost"
+prometheus_image_tag: "v3-distroless"
+prometheus_data_path: "/opt/lgtm/prometheus"

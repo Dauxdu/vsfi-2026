@@ -1,0 +1,10 @@
+.git
+.gitignore
+.gitlab-ci.yml
+deploy/Dockerfile
+deploy/Dockerfile.example
+*.md
+.idea
+.vscode
+.junie
+.claude

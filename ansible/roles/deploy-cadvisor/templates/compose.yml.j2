@@ -1,0 +1,23 @@
+services:
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:{{ cadvisor_image_tag }}
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=64m
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+    networks:
+      - grafana-private
+    deploy:
+      mode: global
+      restart_policy:
+        condition: any
+        delay: 10s
+        max_attempts: 5
+
+networks:
+  grafana-private:
+    external: true

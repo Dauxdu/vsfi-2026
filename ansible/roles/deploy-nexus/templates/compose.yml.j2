@@ -1,0 +1,39 @@
+services:
+  nexus:
+    image: sonatype/nexus3:{{ nexus_image_tag }}
+    networks:
+      - traefik-public
+    volumes:
+      - nexus_data:/nexus-data
+    deploy:
+      labels:
+        - "traefik.enable=true"
+        - "traefik.swarm.network=traefik-public"
+
+        # Nexus UI
+        - "traefik.http.routers.nexus.rule=Host(`{{ nexus_domain }}`)"
+        - "traefik.http.routers.nexus.entrypoints=websecure"
+        - "traefik.http.routers.nexus.tls=true"
+        - "traefik.http.routers.nexus.service=nexus-ui-svc"
+        - "traefik.http.services.nexus-ui-svc.loadbalancer.server.port={{ nexus_ui_port }}"
+
+        # Docker Registry
+        - "traefik.http.routers.nexus-registry.rule=Host(`{{ nexus_registry_domain }}`)"
+        - "traefik.http.routers.nexus-registry.entrypoints=websecure"
+        - "traefik.http.routers.nexus-registry.tls=true"
+        - "traefik.http.routers.nexus-registry.service=nexus-registry-svc"
+        - "traefik.http.services.nexus-registry-svc.loadbalancer.server.port={{ nexus_registry_port }}"
+      placement:
+        constraints:
+          - node.hostname == {{ groups['cicd'][0] }}
+      restart_policy:
+        condition: on-failure
+        delay: 10s
+        max_attempts: 5
+
+volumes:
+  nexus_data:
+
+networks:
+  traefik-public:
+    external: true

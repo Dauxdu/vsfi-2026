@@ -1,0 +1,50 @@
+{
+  "title": "VSFI Night City — Backend Logs",
+  "uid": "backend-logs",
+  "tags": ["logs", "backend", "loki"],
+  "panels": [
+    {
+      "title": "Backend Logs (live)",
+      "type": "logs",
+      "gridPos": { "h": 16, "w": 24, "x": 0, "y": 0 },
+      "datasource": { "type": "loki", "uid": "P8E80F9AEF21F6940" },
+      "targets": [
+        {
+          "expr": "{service=\"night-city-jobs_jobs-backend\"} | json",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "showTime": true,
+        "showLabels": true,
+        "wrapLogMessage": true,
+        "sortOrder": "Descending"
+      }
+    },
+    {
+      "title": "Log Rate (lines/s)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 16 },
+      "datasource": { "type": "loki", "uid": "P8E80F9AEF21F6940" },
+      "targets": [
+        {
+          "expr": "rate({service=\"night-city-jobs_jobs-backend\"}[5m])",
+          "legendFormat": "lines/s"
+        }
+      ]
+    },
+    {
+      "title": "Errors (level=error)",
+      "type": "logs",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 16 },
+      "datasource": { "type": "loki", "uid": "P8E80F9AEF21F6940" },
+      "targets": [
+        {
+          "expr": "{service=\"night-city-jobs_jobs-backend\"} | json | level=\"error\"",
+          "refId": "A"
+        }
+      ]
+    }
+  ],
+  "schemaVersion": 39
+}

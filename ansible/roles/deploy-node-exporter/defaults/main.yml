@@ -1,0 +1,4 @@
+---
+node_exporter_image_tag: v1.12.1-distroless
+node_exporter_data_path: "/opt/lgtm/node-exporter"
+node_exporter_port: 9100

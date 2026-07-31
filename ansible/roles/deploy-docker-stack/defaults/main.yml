@@ -1,0 +1,4 @@
+---
+# Обязательные переменные (передаются через vars при include_role):
+# stack_name: ""
+# stack_compose_path: ""

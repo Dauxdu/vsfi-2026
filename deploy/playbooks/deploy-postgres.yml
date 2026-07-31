@@ -1,0 +1,6 @@
+---
+- name: Deploy PostgreSQL to db-vm
+  hosts: db
+  gather_facts: false
+  roles:
+    - role: postgres

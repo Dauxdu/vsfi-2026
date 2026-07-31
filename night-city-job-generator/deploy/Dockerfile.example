@@ -1,0 +1,5 @@
+FROM registry.vsfi.ru/golang:1.22-alpine AS build
+
+WORKDIR /src
+ENV GOPROXY=https://nexus.vsfi.ru/repository/go-mod-shisha-server/
+

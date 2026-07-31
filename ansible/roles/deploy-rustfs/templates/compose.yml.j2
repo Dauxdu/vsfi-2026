@@ -1,0 +1,44 @@
+services:
+  rustfs:
+    image: rustfs/rustfs:{{ rustfs_image_tag }}
+    command:
+      - server
+      - /data
+      - --address
+      - "0.0.0.0:{{ rustfs_api_port }}"
+      - --console-address
+      - "0.0.0.0:{{ rustfs_console_port }}"
+    environment:
+      RUSTFS_ACCESS_KEY: "{{ rustfs_user }}"
+      RUSTFS_SECRET_KEY: "{{ rustfs_password }}"
+    volumes:
+      - /opt/rustfs/data:/data
+    networks:
+      - traefik-public
+    deploy:
+      labels:
+        - "traefik.enable=true"
+        # S3 API Router
+        - "traefik.http.routers.rustfs-api.rule=Host(`{{ rustfs_domain }}`)"
+        - "traefik.http.routers.rustfs-api.entrypoints=websecure"
+        - "traefik.http.routers.rustfs-api.tls=true"
+        - "traefik.http.routers.rustfs-api.service=rustfs-api"
+        - "traefik.http.services.rustfs-api.loadbalancer.server.port={{ rustfs_api_port }}"
+        # Console UI Router
+        - "traefik.http.routers.rustfs-console.rule=Host(`console.{{ rustfs_domain }}`)"
+        - "traefik.http.routers.rustfs-console.entrypoints=websecure"
+        - "traefik.http.routers.rustfs-console.tls=true"
+        - "traefik.http.routers.rustfs-console.service=rustfs-console"
+        - "traefik.http.services.rustfs-console.loadbalancer.server.port={{ rustfs_console_port }}"
+        - "traefik.swarm.network=traefik-public"
+      placement:
+        constraints:
+          - node.role == manager
+      restart_policy:
+        condition: on-failure
+        delay: 10s
+        max_attempts: 5
+
+networks:
+  traefik-public:
+    external: true

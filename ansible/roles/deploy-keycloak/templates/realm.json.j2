@@ -1,0 +1,172 @@
+{% set base_users = [
+  {
+    "username": "admin",
+    "enabled": true,
+    "emailVerified": true,
+    "firstName": "Admin",
+    "lastName": "User",
+    "email": "admin@" + domain,
+    "credentials": [{"type": "password", "value": keycloak_admin_password, "temporary": false}],
+    "realmRoles": ["admin", "default-roles-" + keycloak_realm_name]
+  }
+] %}
+
+{% set admin_users = [] %}
+{% for user in keycloak_realm_admin_users %}
+{% set _ = admin_users.append({
+  "username": user,
+  "enabled": true,
+  "emailVerified": false,
+  "firstName": user,
+  "lastName": "",
+  "email": user + "@" + domain,
+  "credentials": [{"type": "password", "value": user, "temporary": true}],
+  "groups": ["admins"],
+  "realmRoles": ["admin", "default-roles-" + keycloak_realm_name],
+  "requiredActions": ["UPDATE_PASSWORD", "UPDATE_PROFILE"]
+}) %}
+{% endfor %}
+
+{% set editor_users = [] %}
+{% for user in keycloak_realm_editor_users %}
+{% set _ = editor_users.append({
+  "username": user,
+  "enabled": true,
+  "emailVerified": false,
+  "firstName": user,
+  "lastName": "",
+  "email": user + "@" + domain,
+  "credentials": [{"type": "password", "value": user, "temporary": true}],
+  "groups": ["editors"],
+  "realmRoles": ["editor", "default-roles-" + keycloak_realm_name],
+  "requiredActions": ["UPDATE_PASSWORD", "UPDATE_PROFILE"]
+}) %}
+{% endfor %}
+
+{% set viewer_users = [] %}
+{% for user in keycloak_realm_viewer_users %}
+{% set _ = viewer_users.append({
+  "username": user,
+  "enabled": true,
+  "emailVerified": false,
+  "firstName": user,
+  "lastName": "",
+  "email": user + "@" + domain,
+  "credentials": [{"type": "password", "value": user, "temporary": true}],
+  "groups": ["viewers"],
+  "realmRoles": ["viewer", "default-roles-" + keycloak_realm_name],
+  "requiredActions": ["UPDATE_PASSWORD", "UPDATE_PROFILE"]
+}) %}
+{% endfor %}
+
+{% set all_users = base_users + admin_users + editor_users + viewer_users %}
+
+{
+  "id": "{{ keycloak_realm_name }}",
+  "realm": "{{ keycloak_realm_name }}",
+  "displayName": "VSFI Authentication",
+  "enabled": true,
+  "loginTheme": "keycloak.v2",
+  "accountTheme": "keycloak.v2",
+  "adminTheme": "keycloak.v2",
+  "emailTheme": "keycloak.v2",
+  "registrationAllowed": false,
+  "resetPasswordAllowed": true,
+  "rememberMe": true,
+  "sslRequired": "external",
+  "bruteForceProtected": true,
+  "permanentLockout": false,
+  "maxFailureWaitSeconds": 900,
+  "minimumQuickLoginWaitSeconds": 60,
+  "waitIncrementSeconds": 60,
+  "quickLoginCheckMilliSeconds": 1000,
+  "maxDeltaTimeSeconds": 43200,
+  "failureFactor": 5,
+  "groups": [
+    {"name": "admins"},
+    {"name": "editors"},
+    {"name": "viewers"}
+  ],
+  "roles": {
+    "realm": [
+      {"name": "admin", "description": "Administrator role"},
+      {"name": "editor", "description": "Editor role"},
+      {"name": "viewer", "description": "Viewer role"}
+    ]
+  },
+  "defaultRole": {
+    "name": "default-roles-{{ keycloak_realm_name }}",
+    "description": "${role_default-roles}",
+    "composite": true,
+    "composites": {"realm": ["viewer"]}
+  },
+  "clients": [
+    {
+      "clientId": "{{ grafana_oauth_id }}",
+      "name": "Grafana OAuth Client",
+      "enabled": true,
+      "clientAuthenticatorType": "client-secret",
+      "secret": "{{ grafana_oauth_secret }}",
+      "redirectUris": ["https://{{ grafana_domain }}/*", "https://{{ grafana_domain }}/login/generic_oauth"],
+      "webOrigins": ["https://{{ grafana_domain }}"],
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": false,
+      "publicClient": false,
+      "protocol": "openid-connect",
+      "attributes": {
+        "post.logout.redirect.uris": "https://{{ grafana_domain }}/*",
+        "access.token.lifespan": "3600",
+        "client_credentials.use_refresh_token": "true"
+      },
+      "protocolMappers": [
+        {
+          "name": "roles-mapper",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-realm-role-mapper",
+          "consentRequired": false,
+          "config": {
+            "multivalued": "true",
+            "userinfo.token.claim": "true",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "claim.name": "roles",
+            "jsonType.label": "String"
+          }
+        },
+        {
+          "name": "audience-mapper",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "consentRequired": false,
+          "config": {
+            "included.client.audience": "{{ grafana_oauth_id }}",
+            "id.token.claim": "false",
+            "access.token.claim": "true"
+          }
+        },
+        {
+          "name": "email-mapper",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-property-mapper",
+          "consentRequired": false,
+          "config": {
+            "userinfo.token.claim": "true",
+            "user.attribute": "email",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "claim.name": "email",
+            "jsonType.label": "String"
+          }
+        }
+      ]
+    }
+  ],
+  "users": {{ all_users | tojson(indent=2) }},
+  "scopeMappings": [
+    {
+      "client": "{{ grafana_oauth_id }}",
+      "roles": ["admin", "editor", "viewer"]
+    }
+  ]
+}

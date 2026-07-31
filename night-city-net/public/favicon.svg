@@ -1,0 +1,76 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+    <defs>
+        <!-- Glow filter -->
+        <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur stdDeviation="1" result="blur"/>
+            <feMerge>
+                <feMergeNode in="blur"/>
+                <feMergeNode in="SourceGraphic"/>
+            </feMerge>
+        </filter>
+
+        <!-- Strong glow filter -->
+        <filter id="glowStrong" x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur stdDeviation="2" result="blur"/>
+            <feMerge>
+                <feMergeNode in="blur"/>
+                <feMergeNode in="blur"/>
+                <feMergeNode in="SourceGraphic"/>
+            </feMerge>
+        </filter>
+
+        <!-- Scanline pattern -->
+        <pattern id="scanlines" patternUnits="userSpaceOnUse" width="64" height="4">
+            <rect width="64" height="1" fill="rgba(0,0,0,0.3)"/>
+        </pattern>
+
+        <!-- Gradient backgrounds -->
+        <linearGradient id="bgGrad" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="#0a0a0f"/>
+            <stop offset="100%" stop-color="#1a1a2e"/>
+        </linearGradient>
+
+        <linearGradient id="yellowGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#ffe44d"/>
+            <stop offset="100%" stop-color="#f7e038"/>
+        </linearGradient>
+
+        <linearGradient id="cyanGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#33f5ff"/>
+            <stop offset="100%" stop-color="#00f0ff"/>
+        </linearGradient>
+    </defs>
+
+    <!-- Background -->
+    <rect width="64" height="64" rx="8" fill="url(#bgGrad)"/>
+
+    <!-- Border -->
+    <rect x="1" y="1" width="62" height="62" rx="7" fill="none" stroke="#f7e038" stroke-width="2" opacity="0.8"/>
+
+    <!-- Inner border accent -->
+    <rect x="3" y="3" width="58" height="58" rx="5.5" fill="none" stroke="#00f0ff" stroke-width="0.5" opacity="0.3"/>
+
+    <!-- Scanlines overlay -->
+    <rect width="64" height="64" rx="8" fill="url(#scanlines)"/>
+
+    <!-- Brackets around NC -->
+    <text x="14" y="38" font-family="'Courier New', monospace" font-size="28" font-weight="bold" fill="url(#yellowGrad)" filter="url(#glowStrong)" opacity="0.9">[</text>
+    <text x="46" y="38" font-family="'Courier New', monospace" font-size="28" font-weight="bold" fill="url(#yellowGrad)" filter="url(#glowStrong)" opacity="0.9" text-anchor="end">]</text>
+
+    <!-- NC text -->
+    <text x="32" y="38" font-family="'Courier New', monospace" font-size="24" font-weight="bold" fill="url(#cyanGrad)" filter="url(#glow)" text-anchor="middle" letter-spacing="2">NC</text>
+
+    <!-- Decorative slash marks -->
+    <line x1="10" y1="14" x2="18" y2="14" stroke="#f7e038" stroke-width="1.5" opacity="0.6" filter="url(#glow)"/>
+    <line x1="46" y1="50" x2="54" y2="50" stroke="#f7e038" stroke-width="1.5" opacity="0.6" filter="url(#glow)"/>
+
+    <!-- Corner accents -->
+    <path d="M4 16V4h12" fill="none" stroke="#00f0ff" stroke-width="1.5" opacity="0.5" filter="url(#glow)"/>
+    <path d="M60 16V4H48" fill="none" stroke="#00f0ff" stroke-width="1.5" opacity="0.5" filter="url(#glow)"/>
+    <path d="M4 48v12h12" fill="none" stroke="#00f0ff" stroke-width="1.5" opacity="0.5" filter="url(#glow)"/>
+    <path d="M60 48v12H48" fill="none" stroke="#00f0ff" stroke-width="1.5" opacity="0.5" filter="url(#glow)"/>
+
+    <!-- Small dot indicators -->
+    <circle cx="12" cy="12" r="1.5" fill="#00f0ff" opacity="0.8" filter="url(#glow)"/>
+    <circle cx="52" cy="52" r="1.5" fill="#f7e038" opacity="0.8" filter="url(#glow)"/>
+</svg>

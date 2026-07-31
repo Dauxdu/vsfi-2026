@@ -1,0 +1,39 @@
+services:
+  prometheus:
+    image: prom/prometheus:{{ prometheus_image_tag }}
+    command:
+      - '--config.file=/etc/prometheus/config.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=15d'
+      - '--web.enable-lifecycle'
+    volumes:
+      - {{ prometheus_data_path }}/config.yml:/etc/prometheus/config.yml:ro
+      - {{ prometheus_data_path }}/rules:/etc/prometheus/rules:ro
+      - prometheus_data:/prometheus
+    networks:
+      - traefik-public
+      - grafana-private
+    deploy:
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.prometheus.rule=Host(`{{ prometheus_domain }}`)"
+        - "traefik.http.routers.prometheus.entrypoints=websecure"
+        - "traefik.http.routers.prometheus.tls=true"
+        - "traefik.http.services.prometheus.loadbalancer.server.port=9090"
+        - "traefik.swarm.network=traefik-public"
+      placement:
+        constraints:
+          - node.hostname == {{ groups['mntr'][0] }}
+      restart_policy:
+        condition: on-failure
+        delay: 10s
+        max_attempts: 3
+
+volumes:
+  prometheus_data:
+
+networks:
+  traefik-public:
+    external: true
+  grafana-private:
+    external: true

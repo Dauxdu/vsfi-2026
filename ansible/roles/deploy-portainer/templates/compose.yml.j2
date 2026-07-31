@@ -1,0 +1,37 @@
+services:
+  portainer:
+    image: portainer/portainer-ce:{{ portainer_image_tag }}
+    ports:
+      - "{{ portainer_https_port }}:9443/tcp"
+    volumes:
+      - portainer_data:/data
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - traefik-public
+    deploy:
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.portainer.rule=Host(`{{ portainer_domain }}`)"
+        - "traefik.http.routers.portainer.entrypoints=websecure"
+        - "traefik.http.routers.portainer.tls=true"
+        - "traefik.http.services.portainer.loadbalancer.server.port={{ portainer_http_port }}"
+        - "traefik.swarm.network=traefik-public"
+      placement:
+        constraints:
+          - node.role == manager
+      restart_policy:
+        condition: on-failure
+        delay: 10s
+        max_attempts: 3
+      update_config:
+        parallelism: 1
+        delay: 10s
+        order: stop-first
+        failure_action: rollback
+
+volumes:
+  portainer_data:
+
+networks:
+  traefik-public:
+    external: true

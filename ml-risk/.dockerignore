@@ -1,0 +1,11 @@
+.venv/
+__pycache__/
+*.pyc
+model/
+.pytest_cache/
+.git/
+.gitignore
+.gitlab-ci.yml
+*.md
+.env
+deploy/Dockerfile

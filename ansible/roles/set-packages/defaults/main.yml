@@ -1,0 +1,21 @@
+---
+apt_packages:
+  - unattended-upgrades
+  - apt-listchanges
+  - needrestart
+  - git
+  - nano
+  - curl
+  - wget
+  - htop
+  - net-tools
+  - python3-pip
+  - python3-apt
+  - unzip
+  - jq
+  - ca-certificates
+  - gnupg
+  - lsb-release
+  - qemu-guest-agent
+
+apt_packages_remove: []

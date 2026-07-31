@@ -1,0 +1,21 @@
+---
+backend_port: "8080"
+backend_api_key: ""
+backend_network_node: "NIGHT_CITY_PRIMARY"
+backend_log_format: "json"
+backend_ml_risk_url: "http://ml-risk:8090"
+backend_image: "registry.team01.vsfi.team/team_1/night-city-job-generator:latest"
+
+telemetry_image: "registry.team01.vsfi.team/team_1/telemetry:latest"
+telemetry_rust_log: "info"
+
+postgres_user: "night-city-job-generator"
+postgres_password: ""
+postgres_db: "night-city-job-generator"
+postgres_host: "db_postgres"
+postgres_port: "5432"
+postgres_sslmode: "disable"
+
+registry_url: "registry.team01.vsfi.team"
+registry_username: ""
+registry_password: ""

@@ -1,0 +1,6 @@
+---
+- name: Deploy S3 Rustfs
+  hosts: mgmt
+  gather_facts: true
+  roles:
+    - role: deploy-rustfs

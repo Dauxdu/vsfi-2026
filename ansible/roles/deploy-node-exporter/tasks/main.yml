@@ -1,0 +1,25 @@
+---
+- name: Deploy node-exporter firewall rules
+  ansible.builtin.template:
+    src: node-exporter.nft.j2
+    dest: /etc/nftables.d/node-exporter.nft
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Reload nftables
+
+- name: Create node-exporter directory
+  ansible.builtin.file:
+    path: "{{ node_exporter_data_path }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+  delegate_to: "{{ groups['mgmt'][0] }}"
+
+- name: Deploy node-exporter stack
+  ansible.builtin.include_role:
+    name: deploy-docker-stack
+  vars:
+    stack_name: node-exporter
+    stack_compose_path: "{{ node_exporter_data_path }}/compose.yml"

@@ -1,0 +1,49 @@
+services:
+  grafana:
+    image: grafana/grafana-oss:{{ grafana_image_tag }}
+    networks:
+      - traefik-public
+      - grafana-private
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - {{ grafana_data_path }}/provisioning:/etc/grafana/provisioning:ro
+      - {{ grafana_data_path }}/dashboards:/var/lib/grafana/dashboards:ro
+    environment:
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_SERVER_ROOT_URL=https://{{ grafana_domain }}
+      - GF_METRICS_ENABLED=true
+      # OAuth через Keycloak
+      - GF_AUTH_GENERIC_OAUTH_ENABLED=true
+      - GF_AUTH_GENERIC_OAUTH_NAME=Keycloak-OAuth
+      - GF_AUTH_GENERIC_OAUTH_ALLOW_SIGN_UP=true
+      - GF_AUTH_GENERIC_OAUTH_CLIENT_ID={{ grafana_oauth_id }}
+      - GF_AUTH_GENERIC_OAUTH_CLIENT_SECRET={{ grafana_oauth_secret }}
+      - GF_AUTH_GENERIC_OAUTH_SCOPES=openid email profile offline_access roles
+      - GF_AUTH_GENERIC_OAUTH_AUTH_URL=https://{{ keycloak_domain }}/realms/{{ keycloak_realm_name }}/protocol/openid-connect/auth
+      - GF_AUTH_GENERIC_OAUTH_TOKEN_URL=http://keycloak:8080/realms/{{ keycloak_realm_name }}/protocol/openid-connect/token
+      - GF_AUTH_GENERIC_OAUTH_API_URL=http://keycloak:8080/realms/{{ keycloak_realm_name }}/protocol/openid-connect/userinfo
+      - GF_AUTH_GENERIC_OAUTH_ROLE_ATTRIBUTE_PATH=contains(roles[*], 'admin') && 'Admin' || contains(roles[*], 'editor') && 'Editor' || 'Viewer'
+    deploy:
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.grafana.rule=Host(`{{ grafana_domain }}`)"
+        - "traefik.http.routers.grafana.entrypoints=websecure"
+        - "traefik.http.routers.grafana.tls=true"
+        - "traefik.http.services.grafana.loadbalancer.server.port=3000"
+        - "traefik.swarm.network=traefik-public"
+      placement:
+        constraints:
+          - node.hostname == {{ groups['mntr'][0] }}
+      restart_policy:
+        condition: on-failure
+        delay: 10s
+        max_attempts: 3
+
+volumes:
+  grafana_data:
+
+networks:
+  traefik-public:
+    external: true
+  grafana-private:
+    external: true

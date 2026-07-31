@@ -1,0 +1,5 @@
+---
+fulldomain: "localhost"
+traefik_image_tag: "v3"
+traefik_data_path: "/opt/traefik"
+traefik_log_level: "INFO"

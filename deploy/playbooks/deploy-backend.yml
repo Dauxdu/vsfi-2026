@@ -1,0 +1,6 @@
+---
+- name: Deploy backend to app-vm
+  hosts: app
+  gather_facts: false
+  roles:
+    - role: backend

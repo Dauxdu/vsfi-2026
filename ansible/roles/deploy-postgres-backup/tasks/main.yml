@@ -1,0 +1,85 @@
+---
+- name: Install required packages for backup on DB node
+  ansible.builtin.apt:
+    name:
+      - cron
+      - gzip
+      - rclone
+    state: present
+    update_cache: true
+
+- name: Create backup directories on DB node
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0750"
+  loop:
+    - "{{ backup_data_path }}/tmp"
+    - /root/.config/rclone
+
+- name: Fetch Vault CA from mgmt node
+  ansible.builtin.slurp:
+    src: "/opt/vault/certs/root-ca.crt"
+  delegate_to: "{{ groups['mgmt'][0] }}"
+  register: vault_ca_file
+
+- name: Install Vault CA to system trusted store
+  ansible.builtin.copy:
+    content: "{{ vault_ca_file.content | b64decode }}"
+    dest: "/usr/local/share/ca-certificates/vault-ca.crt"
+    owner: root
+    group: root
+    mode: "0644"
+  register: vault_ca_installed
+
+- name: Update CA certificates
+  ansible.builtin.command:
+    cmd: update-ca-certificates
+  when: vault_ca_installed.changed
+
+- name: Configure rclone for RustFS S3
+  ansible.builtin.template:
+    src: rclone.conf.j2
+    dest: /root/.config/rclone/rclone.conf
+    owner: root
+    group: root
+    mode: "0600"
+  no_log: true
+
+- name: Deploy backup script to DB node
+  ansible.builtin.template:
+    src: backup-postgres.sh.j2
+    dest: /usr/local/bin/backup-postgres.sh
+    owner: root
+    group: root
+    mode: "0750"
+
+- name: Deploy restore script to DB node
+  ansible.builtin.template:
+    src: restore-postgres.sh.j2
+    dest: /usr/local/bin/restore-postgres.sh
+    owner: root
+    group: root
+    mode: "0750"
+
+- name: Setup cron job for daily backups on DB node
+  ansible.builtin.cron:
+    name: "PostgreSQL S3 Backup"
+    minute: "{{ backup_schedule_minute }}"
+    hour: "{{ backup_schedule_hour }}"
+    job: "/usr/local/bin/backup-postgres.sh >> /var/log/postgres-backup.log 2>&1"
+    user: root
+
+- name: Check if initial backup exists
+  ansible.builtin.stat:
+    path: /var/log/postgres-backup.log
+  register: backup_log
+
+- name: Run initial backup to verify configuration
+  ansible.builtin.command:
+    cmd: /usr/local/bin/backup-postgres.sh
+  register: initial_backup
+  changed_when: initial_backup.rc == 0
+  when: not backup_log.stat.exists

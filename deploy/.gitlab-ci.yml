@@ -1,0 +1,145 @@
+stages:
+  - deploy-postgres
+  - deploy-services
+  - fleet-deploy
+
+variables:
+  REGISTRY: "registry.team01.vsfi.team"
+  IMAGE_PREFIX: "team_1"
+  FRONTEND_TAG: "latest"
+  BACKEND_TAG: "latest"
+  ML_RISK_TAG: "latest"
+  TELEMETRY_TAG: "latest"
+  POSTGRES_TAG: "18-alpine"
+  ANSIBLE_HOST_KEY_CHECKING: "False"
+
+.ssh_setup: &ssh_setup
+  - mkdir -p ~/.ssh
+  - echo "$DEPLOY_SSH_KEY" > ~/.ssh/deploy_key
+  - chmod 600 ~/.ssh/deploy_key
+  - echo "$VAULT_PASSWORD" > .vault_password
+  - chmod 600 .vault_password
+
+.ssh_cleanup: &ssh_cleanup
+  - rm -f ~/.ssh/deploy_key
+  - rm -f .vault_password
+
+fleet-deploy:
+  stage: fleet-deploy
+  tags:
+    - docker-buildx
+  needs: []
+  before_script:
+    - *ssh_setup
+  after_script:
+    - *ssh_cleanup
+  script:
+    - |
+      set -euo pipefail
+      echo "Deploying: frontend=${FRONTEND_TAG} backend=${BACKEND_TAG} ml-risk=${ML_RISK_TAG} telemetry=${TELEMETRY_TAG} postgres=${POSTGRES_TAG}"
+      ansible-playbook playbooks/deploy-all.yml \
+        -e "frontend_image=${REGISTRY}/${IMAGE_PREFIX}/night-city-net:${FRONTEND_TAG}" \
+        -e "backend_image=${REGISTRY}/${IMAGE_PREFIX}/night-city-job-generator:${BACKEND_TAG}" \
+        -e "ml_risk_image=${REGISTRY}/${IMAGE_PREFIX}/ml-risk:${ML_RISK_TAG}" \
+        -e "telemetry_image=${REGISTRY}/${IMAGE_PREFIX}/telemetry:${TELEMETRY_TAG}" \
+        -e "postgres_image=${REGISTRY}/postgres:${POSTGRES_TAG}" \
+        -e "registry_username=${REGISTRY_USER}" \
+        -e "registry_password=${REGISTRY_PASSWORD}"
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+      when: manual
+    - if: '$DEPLOY_ALL == "true"'
+      when: manual
+
+deploy-postgres:
+  stage: deploy-postgres
+  tags:
+    - docker-buildx
+  needs: []
+  before_script:
+    - *ssh_setup
+  after_script:
+    - *ssh_cleanup
+  script:
+    - |
+      set -euo pipefail
+      echo "Deploying postgres:${POSTGRES_TAG}"
+      ansible-playbook playbooks/deploy-postgres.yml \
+        -e "postgres_image=${REGISTRY}/postgres:${POSTGRES_TAG}" \
+        -e "registry_username=${REGISTRY_USER}" \
+        -e "registry_password=${REGISTRY_PASSWORD}"
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+      when: manual
+    - if: '$DEPLOY_POSTGRES == "true"'
+      when: manual
+
+deploy-frontend:
+  stage: deploy-services
+  tags:
+    - docker-buildx
+  needs: ["deploy-postgres"]
+  before_script:
+    - *ssh_setup
+  after_script:
+    - *ssh_cleanup
+  script:
+    - |
+      set -euo pipefail
+      echo "Deploying frontend:${FRONTEND_TAG} telemetry:${TELEMETRY_TAG}"
+      ansible-playbook playbooks/deploy-frontend.yml \
+        -e "frontend_image=${REGISTRY}/${IMAGE_PREFIX}/night-city-net:${FRONTEND_TAG}" \
+        -e "telemetry_image=${REGISTRY}/${IMAGE_PREFIX}/telemetry:${TELEMETRY_TAG}" \
+        -e "registry_username=${REGISTRY_USER}" \
+        -e "registry_password=${REGISTRY_PASSWORD}"
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+      when: manual
+    - if: '$DEPLOY_FRONTEND == "true"'
+      when: manual
+
+deploy-backend:
+  stage: deploy-services
+  tags:
+    - docker-buildx
+  needs: ["deploy-postgres"]
+  before_script:
+    - *ssh_setup
+  after_script:
+    - *ssh_cleanup
+  script:
+    - |
+      set -euo pipefail
+      echo "Deploying backend:${BACKEND_TAG}"
+      ansible-playbook playbooks/deploy-backend.yml \
+        -e "backend_image=${REGISTRY}/${IMAGE_PREFIX}/night-city-job-generator:${BACKEND_TAG}" \
+        -e "registry_username=${REGISTRY_USER}" \
+        -e "registry_password=${REGISTRY_PASSWORD}"
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+      when: manual
+    - if: '$DEPLOY_BACKEND == "true"'
+      when: manual
+
+deploy-ml-risk:
+  stage: deploy-services
+  tags:
+    - docker-buildx
+  needs: ["deploy-postgres"]
+  before_script:
+    - *ssh_setup
+  after_script:
+    - *ssh_cleanup
+  script:
+    - |
+      set -euo pipefail
+      echo "Deploying ml-risk:${ML_RISK_TAG}"
+      ansible-playbook playbooks/deploy-ml-risk.yml \
+        -e "ml_risk_image=${REGISTRY}/${IMAGE_PREFIX}/ml-risk:${ML_RISK_TAG}" \
+        -e "registry_username=${REGISTRY_USER}" \
+        -e "registry_password=${REGISTRY_PASSWORD}"
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+      when: manual
+    - if: '$DEPLOY_ML_RISK == "true"'
+      when: manual

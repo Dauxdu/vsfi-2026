@@ -1,0 +1,58 @@
+services:
+  keycloak:
+    image: keycloak/keycloak:{{ keycloak_image_tag }}
+    command: [ "start", "--import-realm" ]
+    environment:
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://postgres:5432/{{ keycloak_db }}
+      KC_DB_USERNAME: {{ keycloak_db_user }}
+      KC_DB_PASSWORD: {{ keycloak_db_password }}
+      
+      # Bootstrap admin account
+      KC_BOOTSTRAP_ADMIN_USERNAME: {{ keycloak_admin_user }}
+      KC_BOOTSTRAP_ADMIN_PASSWORD: {{ keycloak_admin_password }}
+      
+      # Настройки для работы за Reverse Proxy (Traefik)
+      KC_PROXY_HEADERS: xforwarded
+      KC_HOSTNAME: {{ keycloak_domain }}
+      KC_HOSTNAME_STRICT: "true"
+      KC_HTTP_ENABLED: "true"
+      
+      # Мониторинг и логи
+      KC_HEALTH_ENABLED: "true"
+      KC_METRICS_ENABLED: "true"
+      KC_LOG_LEVEL: INFO
+      
+      # Настройка кластеризации (JGroups)
+      JAVA_OPTS_APPEND: "-Djgroups.dns.query=keycloak"
+    volumes:
+      - /opt/keycloak/import:/opt/keycloak/data/import:ro
+    networks:
+      - traefik-public
+      - postgres-internal
+    deploy:
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.keycloak.rule=Host(`{{ keycloak_domain }}`)"
+        - "traefik.http.routers.keycloak.entrypoints=websecure"
+        - "traefik.http.routers.keycloak.tls=true"
+        - "traefik.http.services.keycloak.loadbalancer.server.port=8080"
+        - "traefik.swarm.network=traefik-public"
+      placement:
+        constraints:
+          - node.role == manager
+      restart_policy:
+        condition: on-failure
+        delay: 10s
+        max_attempts: 5
+      update_config:
+        parallelism: 1
+        delay: 30s
+        order: stop-first
+        failure_action: rollback
+
+networks:
+  traefik-public:
+    external: true
+  postgres-internal:
+    external: true

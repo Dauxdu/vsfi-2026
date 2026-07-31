@@ -1,0 +1,22 @@
+---
+keycloak_image_tag: "26.7"
+keycloak_data_path: "/opt/keycloak"
+
+# Keycloak
+keycloak_db: "keycloak"
+keycloak_db_user: "keycloak"
+keycloak_db_password: "keycloak"
+keycloak_domain: "auth.localhost"
+keycloak_realm_name: "vsfi"
+keycloak_admin_user: "admin"
+keycloak_admin_password: "keycloak"
+
+# Списки пользователей Keycloak
+keycloak_realm_admin_users: []
+keycloak_realm_editor_users: []
+keycloak_realm_viewer_users: []
+
+# Grafana OAuth
+grafana_domain: "gr.localhost"
+grafana_oauth_id: "grafana-oauth"
+grafana_oauth_secret: ""

@@ -1,0 +1,9 @@
+---
+postgres_user: "postgres"
+postgres_password: ""
+postgres_db: "postgres"
+postgres_port: "5432"
+postgres_image: "registry.team01.vsfi.team/postgres:18-alpine"
+registry_url: "registry.team01.vsfi.team"
+registry_username: ""
+registry_password: ""

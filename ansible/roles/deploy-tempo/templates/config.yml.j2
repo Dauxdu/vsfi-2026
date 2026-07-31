@@ -1,0 +1,24 @@
+# {{ ansible_managed }}
+server:
+  http_listen_port: {{ tempo_http_port }}
+  log_level: info
+
+distributor:
+  receivers:
+    otlp:
+      protocols:
+        grpc:
+          endpoint: 0.0.0.0:{{ tempo_otlp_grpc_port }}
+        http:
+          endpoint: 0.0.0.0:{{ tempo_otlp_http_port }}
+
+storage:
+  trace:
+    backend: local
+    local:
+      path: /var/tempo/traces
+    wal:
+      path: /var/tempo/wal
+
+usage_report:
+  reporting_enabled: false

@@ -1,0 +1,26 @@
+---
+- name: Create Alertmanager directories
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+  loop:
+    - "{{ alertmanager_data_path | dirname }}"
+    - "{{ alertmanager_data_path }}"
+
+- name: Generate Alertmanager config
+  ansible.builtin.template:
+    src: config.yml.j2
+    dest: "{{ alertmanager_data_path }}/config.yml"
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Deploy Alertmanager stack
+  ansible.builtin.include_role:
+    name: deploy-docker-stack
+  vars:
+    stack_name: alertmanager
+    stack_compose_path: "{{ alertmanager_data_path }}/compose.yml"

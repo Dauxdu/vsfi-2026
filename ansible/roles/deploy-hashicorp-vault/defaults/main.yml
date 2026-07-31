@@ -1,0 +1,20 @@
+---
+vault_data_path: "/opt/vault"
+vault_image_tag: "2.0"
+vault_port: 8200
+vault_domain: "vault.localhost"
+vault_root_common_name: "VSFI Root CA"
+vault_intermediate_common_name: "VSFI Intermediate CA"
+vault_allowed_domain: ""
+vault_role_name: "team01"
+
+# PKI configuration
+vault_root_pki: "pki-root"
+vault_int_pki: "pki-int"
+
+# TTL settings
+vault_root_ttl: "87600h" # 10 years
+vault_int_ttl: "43800h" # 5 years
+vault_cert_ttl: "720h" # 30 days
+vault_default_lease_ttl: "168h" # 7 days
+vault_max_lease_ttl: "720h" # 30 days

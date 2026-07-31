@@ -1,0 +1,67 @@
+# {{ ansible_managed }}
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+rule_files:
+  - /etc/prometheus/rules/*.yml
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: ["alertmanager:9093"]
+
+scrape_configs:
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+        labels:
+          nodename: '{{ inventory_hostname }}'
+
+  - job_name: 'alertmanager'
+    static_configs:
+      - targets: ['alertmanager:9093']
+        labels:
+          nodename: '{{ inventory_hostname }}'
+
+  - job_name: 'loki'
+    static_configs:
+      - targets: ['loki:3100']
+        labels:
+          nodename: '{{ inventory_hostname }}'
+
+  - job_name: 'node-exporter'
+    static_configs:
+  {% for host in groups['all'] %}
+    - targets: ['{{ hostvars[host].ansible_host }}:9100']
+        labels:
+          nodename: '{{ host }}'
+  {% endfor %}
+
+  - job_name: 'cadvisor'
+    dns_sd_configs:
+      - names:
+          - 'tasks.cadvisor'
+        type: 'A'
+        port: 8080
+    relabel_configs:
+      - source_labels: [__meta_dns_name]
+        regex: 'tasks\.cadvisor\.(.*)'
+        replacement: '${1}'
+        target_label: instance
+      - target_label: source
+        replacement: 'cadvisor'
+
+  - job_name: 'night-city-frontend'
+    static_configs:
+      - targets: ['nginx-exporter:9113']
+        labels:
+          service: 'night-city-net'
+
+  - job_name: 'night-city-backend'
+    metrics_path: '/metrics'
+    static_configs:
+      - targets: ['jobs-backend:8080']
+        labels:
+          service: 'night-city-job-generator'

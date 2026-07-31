@@ -1,0 +1,8 @@
+---
+alertmanager_domain: "alert.localhost"
+alertmanager_image_tag: "v0.33.1"
+alertmanager_data_path: "/opt/lgtm/alertmanager"
+
+telegram_bot_token: ""
+telegram_chat_id: 0
+telegram_api_url: "https://api.telegram.org"

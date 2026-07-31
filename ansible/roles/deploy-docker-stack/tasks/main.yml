@@ -1,0 +1,32 @@
+---
+- name: Set Swarm manager delegate host
+  ansible.builtin.set_fact:
+    stack_manager_host: "{{ groups['swarm_managers'][0] }}"
+  run_once: true
+
+- name: "Generate '{{ stack_name }}' compose file"
+  ansible.builtin.template:
+    src: compose.yml.j2
+    dest: "{{ stack_compose_path }}"
+    owner: root
+    group: root
+    mode: "0640"
+  delegate_to: "{{ stack_manager_host }}"
+  run_once: true
+
+- name: "Deploy Docker stack '{{ stack_name }}'"
+  ansible.builtin.command:
+    cmd: "docker stack deploy -c {{ stack_compose_path }} --prune --with-registry-auth {{ stack_name }}"
+  register: stack_deploy_result
+  changed_when: >-
+    'Creating service' in stack_deploy_result.stdout
+    or 'Updating service' in stack_deploy_result.stdout
+  delegate_to: "{{ stack_manager_host }}"
+  run_once: true
+
+- name: "Display '{{ stack_name }}' stack deploy result"
+  ansible.builtin.debug:
+    var: stack_deploy_result.stdout_lines
+  delegate_to: "{{ stack_manager_host }}"
+  run_once: true
+  when: stack_deploy_result.stdout_lines is defined

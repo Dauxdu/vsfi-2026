@@ -1,0 +1,34 @@
+services:
+  tempo:
+    image: grafana/tempo:{{ tempo_image_tag }}
+    command: -config.file=/etc/tempo/config.yml
+    volumes:
+      - {{ tempo_data_path }}/config.yml:/etc/tempo/config.yml:ro
+      - tempo_data:/var/tempo
+    networks:
+      - traefik-public
+      - grafana-private
+    deploy:
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.tempo.rule=Host(`{{ tempo_domain }}`)"
+        - "traefik.http.routers.tempo.entrypoints=websecure"
+        - "traefik.http.routers.tempo.tls=true"
+        - "traefik.http.services.tempo.loadbalancer.server.port={{ tempo_http_port }}"
+        - "traefik.swarm.network=traefik-public"
+      placement:
+        constraints:
+          - node.hostname == {{ groups['mntr'][0] }}
+      restart_policy:
+        condition: on-failure
+        delay: 10s
+        max_attempts: 3
+
+volumes:
+  tempo_data:
+
+networks:
+  traefik-public:
+    external: true
+  grafana-private:
+    external: true

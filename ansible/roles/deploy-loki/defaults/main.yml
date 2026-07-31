@@ -1,0 +1,6 @@
+---
+loki_domain: "loki.localhost"
+loki_image_tag: "3.7"
+loki_data_path: "/opt/lgtm/loki"
+loki_http_port: 3100
+loki_grpc_port: 9095

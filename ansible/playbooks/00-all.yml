@@ -1,0 +1,39 @@
+---
+- name: Import Server Setup Playbook
+  ansible.builtin.import_playbook: 01-setup-server.yml
+
+- name: Import Docker Setup Playbook
+  ansible.builtin.import_playbook: 02-setup-docker.yml
+
+- name: Import Docker Swarm Setup Playbook
+  ansible.builtin.import_playbook: 03-setup-docker-swarm.yml
+
+- name: Import HashiCorp Vault Deploy Playbook
+  ansible.builtin.import_playbook: 04-deploy-hashicorp-vault.yml
+
+- name: Import Portainer Deploy Playbook
+  ansible.builtin.import_playbook: 05-deploy-portainer.yml
+
+- name: Import Traefik Deploy Playbook
+  ansible.builtin.import_playbook: 06-deploy-traefik.yml
+
+- name: Import Postgres Deploy Playbook
+  ansible.builtin.import_playbook: 07-deploy-postgres.yml
+
+- name: Import Keycloak Deploy Playbook
+  ansible.builtin.import_playbook: 08-deploy-keycloak.yml
+
+- name: Import LGTM Stack Deploy Playbook
+  ansible.builtin.import_playbook: 09-deploy-lgtm.yml
+
+- name: Import GitLab Deploy Playbook
+  ansible.builtin.import_playbook: 10-deploy-gitlab.yml
+
+- name: Import RustFS Deploy Playbook
+  ansible.builtin.import_playbook: 11-deploy-rustfs.yml
+
+- name: Import Nexus Deploy Playbook
+  ansible.builtin.import_playbook: 12-deploy-nexus.yml
+
+- name: Import PostgresSQL Deploy Backup S3
+  ansible.builtin.import_playbook: 13-deploy-postgres-backup.yml

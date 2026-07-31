@@ -1,0 +1,32 @@
+# {{ ansible_managed }}
+
+external_url 'https://{{ gitlab_domain }}'
+gitlab_rails['gitlab_shell_enabled'] = true
+
+# --- NGINX Configuration ---
+gitlab_rails['nginx']['listen_addresses'] = ['0.0.0.0']
+gitlab_rails['nginx']['listen_port'] = {{ gitlab_listen_port }}
+gitlab_rails['nginx']['listen_https'] = false
+
+gitlab_rails['nginx']['real_ip_trusted_addresses'] = [ '{{ ansible_facts["default_ipv4"]["network"] }}/{{ ansible_facts["default_ipv4"]["prefix"] }}' ]
+gitlab_rails['nginx']['real_ip_header'] = 'X-Forwarded-For'
+gitlab_rails['nginx']['real_ip_recursive'] = 'on'
+
+gitlab_rails['nginx']['proxy_set_headers'] = {
+  "Host" => "$http_host",
+  "X-Real-IP" => "$remote_addr",
+  "X-Forwarded-For" => "$proxy_add_x_forwarded_for",
+  "X-Forwarded-Proto" => "https",
+  "X-Forwarded-Ssl" => "on",
+  "X-Forwarded-Port" => "443"
+}
+
+letsencrypt['enable'] = false
+node_exporter['enable'] = false
+
+# --- Container Registry Settings ---
+gitlab_rails['registry_enabled'] = false
+gitlab_rails['packages_enabled'] = false
+
+gitlab_rails['initial_root_password'] = '{{ gitlab_root_password }}'
+gitlab_rails['time_zone'] = '{{ timezone }}'

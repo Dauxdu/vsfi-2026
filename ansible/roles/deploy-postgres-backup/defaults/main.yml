@@ -1,0 +1,20 @@
+---
+rustfs_domain: "s3.localhost"
+rustfs_user: "rustfs"
+rustfs_password: "rustfs"
+s3_endpoint: "https://{{ rustfs_domain }}"
+s3_bucket: "postgres-backups"
+s3_access_key: "{{ rustfs_user }}"
+s3_secret_key: "{{ rustfs_password }}"
+
+# Backup settings
+postgres_container_name: "postgres_postgres"
+backup_retention_days: 7
+backup_schedule_hour: "2"
+backup_schedule_minute: "0"
+backup_data_path: "/opt/postgres-backup"
+backup_encryption_key: ""
+
+# Databases to backup
+backup_databases:
+  - "{{ keycloak_db }}"

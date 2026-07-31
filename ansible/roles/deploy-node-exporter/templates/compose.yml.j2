@@ -1,0 +1,18 @@
+services:
+  node-exporter:
+    image: prom/node-exporter:{{ node_exporter_image_tag }}
+    ports:
+      - {{ node_exporter_port }}:9100/tcp
+    command:
+      - '--path.rootfs=/host'
+      - '--collector.processes'
+      - '--collector.tcpstat'
+      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+    volumes:
+      - /:/host:ro,rslave
+    deploy:
+      mode: global
+      restart_policy:
+        condition: on-failure
+        delay: 10s
+        max_attempts: 5

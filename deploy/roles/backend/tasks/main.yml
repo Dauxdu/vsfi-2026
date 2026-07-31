@@ -1,0 +1,44 @@
+---
+- name: Create deployment directory
+  ansible.builtin.file:
+    path: /opt/night-city
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+  delegate_to: "{{ groups['swarm_managers'][0] }}"
+  run_once: true
+
+- name: Authenticate with container registry
+  community.docker.docker_login:
+    registry_url: "{{ registry_url }}"
+    username: "{{ registry_username }}"
+    password: "{{ registry_password }}"
+    reauthorize: false
+    validate_certs: false
+  no_log: true
+
+- name: Template backend compose file
+  ansible.builtin.template:
+    src: backend-stack.yml.j2
+    dest: "/opt/night-city/backend-stack.yml"
+    owner: root
+    group: root
+    mode: "0640"
+  delegate_to: "{{ groups['swarm_managers'][0] }}"
+  run_once: true
+
+- name: Deploy backend stack via Docker Swarm
+  ansible.builtin.command:
+    cmd: >
+      docker stack deploy
+      --compose-file /opt/night-city/backend-stack.yml
+      --with-registry-auth
+      --prune
+      night-city-jobs
+  register: stack_deploy
+  changed_when: >
+    'Creating service' in stack_deploy.stdout
+    or 'Updating service' in stack_deploy.stdout
+  delegate_to: "{{ groups['swarm_managers'][0] }}"
+  run_once: true

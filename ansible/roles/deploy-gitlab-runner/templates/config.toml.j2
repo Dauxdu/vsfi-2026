@@ -1,0 +1,25 @@
+# {{ ansible_managed }}
+
+concurrent = {{ gitlab_runner_concurrent }}
+check_interval = {{ gitlab_runner_check_interval }}
+
+[session_server]
+  session_timeout = {{ gitlab_runner_session_timeout }}
+
+[[runners]]
+  name = "{{ gitlab_runner_description }}"
+  url = "https://{{ gitlab_domain }}"
+  token = "{{ gitlab_runner_token }}"
+  executor = "{{ gitlab_runner_executor }}"
+  tls-ca-file = "{{ gitlab_runner_tls_ca_file }}"
+
+  environment = [
+{% for env in gitlab_runner_environment %}
+    "{{ env }}"{% if not loop.last %},{% endif %}
+{% endfor %}
+  ]
+
+  [runners.cache]
+  [runners.cache.s3]
+  [runners.cache.gcs]
+  [runners.cache.azure]

@@ -1,0 +1,12 @@
+node_modules
+dist
+.git
+.gitignore
+.idea
+.junie
+.claude
+.vscode
+*.log
+*.md
+deploy/Dockerfile
+deploy/Dockerfile.example

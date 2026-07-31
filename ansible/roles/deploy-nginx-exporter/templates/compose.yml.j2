@@ -1,0 +1,22 @@
+services:
+  nginx-exporter:
+    image: nginx/nginx-prometheus-exporter:{{ nginx_exporter_image_tag }}
+    command:
+      - '--nginx.scrape-uri={{ nginx_target_url }}'
+    networks:
+      - traefik-public
+      - grafana-private
+    deploy:
+      placement:
+        constraints:
+          - node.hostname == {{ groups['mntr'][0] }}
+      restart_policy:
+        condition: on-failure
+        delay: 10s
+        max_attempts: 3
+
+networks:
+  traefik-public:
+    external: true
+  grafana-private:
+    external: true

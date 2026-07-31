@@ -1,0 +1,34 @@
+services:
+  loki:
+    image: grafana/loki:{{ loki_image_tag }}
+    command: -config.file=/etc/loki/config.yml
+    volumes:
+      - {{ loki_data_path }}/config.yml:/etc/loki/config.yml:ro
+      - loki_data:/loki
+    networks:
+      - traefik-public
+      - grafana-private
+    deploy:
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.loki.rule=Host(`{{ loki_domain }}`)"
+        - "traefik.http.routers.loki.entrypoints=websecure"
+        - "traefik.http.routers.loki.tls=true"
+        - "traefik.http.services.loki.loadbalancer.server.port={{ loki_http_port }}"
+        - "traefik.swarm.network=traefik-public"
+      placement:
+        constraints:
+          - node.hostname == {{ groups['mntr'][0] }}
+      restart_policy:
+        condition: on-failure
+        delay: 10s
+        max_attempts: 3
+
+volumes:
+  loki_data:
+
+networks:
+  traefik-public:
+    external: true
+  grafana-private:
+    external: true

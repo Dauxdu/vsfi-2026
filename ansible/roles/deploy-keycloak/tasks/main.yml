@@ -1,0 +1,26 @@
+---
+- name: Create Keycloak directories
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+  loop:
+    - "{{ keycloak_data_path }}"
+    - "{{ keycloak_data_path }}/import"
+
+- name: Generate Keycloak realm configuration
+  ansible.builtin.template:
+    src: realm.json.j2
+    dest: "{{ keycloak_data_path }}/import/realm.json"
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Deploy Keycloak stack
+  ansible.builtin.include_role:
+    name: deploy-docker-stack
+  vars:
+    stack_name: keycloak
+    stack_compose_path: "{{ keycloak_data_path }}/compose.yml"

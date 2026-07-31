@@ -1,0 +1,6 @@
+---
+- name: Deploy Keycloak for SSO
+  hosts: mgmt
+  gather_facts: true
+  roles:
+    - role: deploy-keycloak

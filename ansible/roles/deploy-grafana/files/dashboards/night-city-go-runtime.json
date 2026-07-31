@@ -1,0 +1,78 @@
+{
+  "title": "VSFI Night City — Go Runtime & Process",
+  "uid": "night-city-jobs-go",
+  "tags": ["night-city", "go", "runtime"],
+  "panels": [
+    {
+      "title": "Goroutines",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+      "targets": [
+        {
+          "expr": "go_goroutines{job='night-city-backend'}",
+          "legendFormat": "goroutines"
+        }
+      ]
+    },
+    {
+      "title": "Heap Memory",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+      "targets": [
+        {
+          "expr": "go_memstats_heap_alloc_bytes{job='night-city-backend'}",
+          "legendFormat": "heap alloc"
+        },
+        {
+          "expr": "go_memstats_heap_sys_bytes{job='night-city-backend'}",
+          "legendFormat": "heap sys"
+        }
+      ]
+    },
+    {
+      "title": "GC Pause Duration",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
+      "targets": [
+        {
+          "expr": "rate(go_gc_duration_seconds_sum{job='night-city-backend'}[5m])",
+          "legendFormat": "gc pause/s"
+        }
+      ]
+    },
+    {
+      "title": "Process CPU",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
+      "targets": [
+        {
+          "expr": "rate(process_cpu_seconds_total{job='night-city-backend'}[5m])",
+          "legendFormat": "cpu cores"
+        }
+      ]
+    },
+    {
+      "title": "Process RSS Memory",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 16 },
+      "targets": [
+        {
+          "expr": "process_resident_memory_bytes{job='night-city-backend'}",
+          "legendFormat": "RSS"
+        }
+      ]
+    },
+    {
+      "title": "Open File Descriptors",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 16 },
+      "targets": [
+        {
+          "expr": "process_open_fds{job='night-city-backend'}",
+          "legendFormat": "open fds"
+        }
+      ]
+    }
+  ],
+  "schemaVersion": 39
+}

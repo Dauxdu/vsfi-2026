@@ -1,0 +1,7 @@
+---
+ml_risk_port: "8090"
+ml_risk_log_format: "json"
+ml_risk_image: "registry.team01.vsfi.team/team_1/ml-risk:latest"
+registry_url: "registry.team01.vsfi.team"
+registry_username: ""
+registry_password: ""

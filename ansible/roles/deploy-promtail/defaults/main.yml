@@ -1,0 +1,4 @@
+---
+promtail_image_tag: "3.6"
+promtail_data_path: "/opt/lgtm/promtail"
+loki_push_url: "http://loki:3100/loki/api/v1/push"

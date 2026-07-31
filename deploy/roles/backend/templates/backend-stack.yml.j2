@@ -1,0 +1,62 @@
+services:
+  jobs-backend:
+    image: "{{ backend_image }}"
+    environment:
+      PORT: "{{ backend_port }}"
+      DATABASE_URL: "postgres://{{ postgres_user }}:{{ postgres_password }}@{{ postgres_host }}:{{ postgres_port }}/{{ postgres_db }}?sslmode={{ postgres_sslmode }}"
+      API_KEY: "{{ backend_api_key }}"
+      NETWORK_NODE: "{{ backend_network_node }}"
+      LOG_FORMAT: "{{ backend_log_format }}"
+      ML_RISK_URL: "{{ backend_ml_risk_url }}"
+    networks:
+      - traefik-public
+      - postgres-internal
+    deploy:
+      replicas: 1
+      placement:
+        constraints:
+          - node.hostname == app1
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+      update_config:
+        parallelism: 1
+        delay: 10s
+        order: start-first
+        failure_action: rollback
+
+  telemetry-backend:
+    image: "{{ telemetry_image }}"
+    environment:
+      RUST_LOG: "{{ telemetry_rust_log }}"
+      RUST_BACKTRACE: full
+      DB_URL: "postgres://{{ postgres_user }}:{{ postgres_password }}@{{ postgres_host }}:{{ postgres_port }}/{{ postgres_db }}?sslmode={{ postgres_sslmode }}"
+    volumes:
+      - telemetry_data:/var/app/data
+    networks:
+      - traefik-public
+      - postgres-internal
+    deploy:
+      replicas: 1
+      placement:
+        constraints:
+          - node.hostname == app1
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+      update_config:
+        parallelism: 1
+        delay: 10s
+        order: start-first
+        failure_action: rollback
+
+volumes:
+  telemetry_data:
+
+networks:
+  traefik-public:
+    external: true
+  postgres-internal:
+    external: true

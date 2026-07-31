@@ -1,0 +1,12 @@
+---
+- name: Import deploy tasks
+  ansible.builtin.import_tasks: deploy.yml
+
+- name: Import init tasks
+  ansible.builtin.import_tasks: init.yml
+
+- name: Import PKI tasks
+  ansible.builtin.import_tasks: pki.yml
+
+- name: Import certificate tasks
+  ansible.builtin.import_tasks: issue.yml

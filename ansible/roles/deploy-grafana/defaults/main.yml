@@ -1,0 +1,9 @@
+---
+grafana_domain: "gr.localhost"
+grafana_image_tag: "13.0.2"
+grafana_data_path: "/opt/lgtm/grafana"
+grafana_oauth_id: "grafana-oauth"
+grafana_oauth_secret: ""
+
+keycloak_domain: "auth.localhost"
+keycloak_realm_name: "vsfi"

@@ -1,0 +1,4 @@
+# {{ ansible_managed }}
+
+# GitLab firewall rules
+ip saddr {{ hostvars['mgmt1']['ansible_host'] }} tcp dport {{ gitlab_listen_port }} accept;

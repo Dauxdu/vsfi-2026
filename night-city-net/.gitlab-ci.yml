@@ -1,0 +1,50 @@
+stages:
+  - build
+
+variables:
+  REGISTRY: "registry.team01.vsfi.team"
+  IMAGE_NAME: "team_1/night-city-net"
+  DOCKER_BUILDKIT: "1"
+  BUILDKIT_PROGRESS: "plain"
+
+build-frontend:
+  stage: build
+  tags:
+    - docker-buildx
+  needs: []
+
+  before_script:
+    - mkdir -p ./deploy
+    - cp "$CA_CERT" ./deploy/ca.crt
+    - echo "$REGISTRY_PASSWORD" | docker login -u "$REGISTRY_USER" --password-stdin "$REGISTRY"
+    - docker buildx use default
+
+  after_script:
+    - docker logout "$REGISTRY" || true
+    - rm -f ./deploy/ca.crt
+  script:
+    - |
+      set -euo pipefail
+
+      if [ -n "${CI_COMMIT_TAG:-}" ]; then
+        IMAGE_TAG="$CI_COMMIT_TAG"
+      else
+        IMAGE_TAG="$CI_COMMIT_SHORT_SHA"
+      fi
+
+      echo "Building ${REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}"
+
+      docker buildx build \
+        --platform linux/amd64 \
+        --push \
+        --label "org.opencontainers.image.source=${CI_PROJECT_URL}" \
+        --label "org.opencontainers.image.revision=${CI_COMMIT_SHA}" \
+        --label "org.opencontainers.image.version=${IMAGE_TAG}" \
+        --label "org.opencontainers.image.created=$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+        -t "${REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}" \
+        -t "${REGISTRY}/${IMAGE_NAME}:latest" \
+        -f deploy/Dockerfile \
+        .
+  rules:
+    - if: "$CI_COMMIT_TAG"
+    - if: '$CI_COMMIT_BRANCH == "main"'

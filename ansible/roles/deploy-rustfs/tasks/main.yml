@@ -1,0 +1,18 @@
+---
+- name: Create RustFS directories
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: "10001"
+    group: "10001"
+    mode: "0755"
+  loop:
+    - "{{ rustfs_data_path }}"
+    - "{{ rustfs_data_path }}/data"
+
+- name: Deploy RustFS stack
+  ansible.builtin.include_role:
+    name: deploy-docker-stack
+  vars:
+    stack_name: rustfs
+    stack_compose_path: "{{ rustfs_data_path }}/compose.yml"

@@ -1,0 +1,45 @@
+#!/bin/bash
+# {{ ansible_managed }}
+
+# Usage: restore-postgres.sh <s3-key> [database-name]
+
+set -euo pipefail
+
+RCLONE_REMOTE="rustfs"
+S3_BUCKET="{{ s3_bucket }}"
+RESTORE_DIR="/tmp/pg_restore"
+
+# Динамический поиск ID контейнера в Docker Swarm
+CONTAINER_ID=$(docker ps -q -f "name=postgres_postgres" | head -n 1)
+
+if [ -z "${CONTAINER_ID}" ]; then
+    echo "ERROR: PostgreSQL container not found!"
+    exit 1
+fi
+
+if [ $# -lt 1 ]; then
+    echo "Usage: $0 <s3-backup-key> [target-database]"
+    echo ""
+    echo "Available backups:"
+    rclone lsl "${RCLONE_REMOTE}:${S3_BUCKET}/" | awk '{print $4}' || echo "No backups found."
+    exit 1
+fi
+
+S3_KEY="$1"
+TARGET_DB="${2:-}"
+
+mkdir -p "${RESTORE_DIR}"
+LOCAL_FILE="${RESTORE_DIR}/$(basename "${S3_KEY}")"
+
+echo "=== Restoring from ${RCLONE_REMOTE}:${S3_BUCKET}/${S3_KEY} ==="
+
+rclone copyto "${RCLONE_REMOTE}:${S3_BUCKET}/${S3_KEY}" "${LOCAL_FILE}"
+
+echo "Downloaded: ${LOCAL_FILE}"
+
+# Восстановление через ID контейнера
+gunzip -c "${LOCAL_FILE}" | docker exec -i "${CONTAINER_ID}" psql -U postgres ${TARGET_DB:+-d "${TARGET_DB}"}
+
+echo "=== Restore completed successfully ==="
+
+rm -f "${LOCAL_FILE}"

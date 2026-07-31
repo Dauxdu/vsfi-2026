@@ -1,0 +1,37 @@
+services:
+  alertmanager:
+    image: prom/alertmanager:{{ alertmanager_image_tag }}
+    command:
+      - '--config.file=/etc/alertmanager/config.yml'
+      - '--storage.path=/alertmanager'
+      - '--web.external-url=https://{{ alertmanager_domain }}'
+    volumes:
+      - "{{ alertmanager_data_path }}/config.yml:/etc/alertmanager/config.yml:ro"
+      - alertmanager_data:/alertmanager
+    networks:
+      - traefik-public
+      - grafana-private
+    deploy:
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.alertmanager.rule=Host(`{{ alertmanager_domain }}`)"
+        - "traefik.http.routers.alertmanager.entrypoints=websecure"
+        - "traefik.http.routers.alertmanager.tls=true"
+        - "traefik.http.services.alertmanager.loadbalancer.server.port=9093"
+        # - "traefik.http.routers.alertmanager.middlewares=auth-alertmanager@file"
+      placement:
+        constraints:
+          - node.hostname == {{ groups['mntr'][0] }}
+      restart_policy:
+        condition: on-failure
+        delay: 10s
+        max_attempts: 3
+
+volumes:
+  alertmanager_data:
+
+networks:
+  traefik-public:
+    external: true
+  grafana-private:
+    external: true

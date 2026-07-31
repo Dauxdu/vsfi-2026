@@ -1,0 +1,6 @@
+---
+- name: Deploy Nexus Repository
+  hosts: cicd
+  gather_facts: true
+  roles:
+    - role: deploy-nexus

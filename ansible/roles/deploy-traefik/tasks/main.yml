@@ -1,0 +1,93 @@
+---
+- name: Deploy Traefik firewall rules
+  ansible.builtin.template:
+    src: traefik.nft.j2
+    dest: /etc/nftables.d/traefik.nft
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Reload nftables
+
+- name: Create Traefik config directories
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    mode: "0755"
+    owner: root
+    group: root
+  loop:
+    - "{{ traefik_data_path }}"
+    - "{{ traefik_data_path }}/dynamic"
+    - "{{ traefik_data_path }}/certs"
+
+- name: Generate Traefik static config (traefik.yml)
+  ansible.builtin.template:
+    src: traefik.yml.j2
+    dest: "{{ traefik_data_path }}/traefik.yml"
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Check if Vault certificate exists
+  ansible.builtin.stat:
+    path: "/opt/vault/certs/{{ fulldomain }}.crt"
+  register: vault_cert_file
+
+- name: Check if Traefik certificate exists
+  ansible.builtin.stat:
+    path: "{{ traefik_data_path }}/certs/{{ fulldomain }}.crt"
+  register: traefik_cert_file
+
+- name: Compare Vault and Traefik certificate checksums
+  ansible.builtin.stat:
+    path: "{{ item }}"
+    checksum_algorithm: sha256
+  register: cert_checksums
+  loop:
+    - "/opt/vault/certs/{{ fulldomain }}.crt"
+    - "{{ traefik_data_path }}/certs/{{ fulldomain }}.crt"
+  when: vault_cert_file.stat.exists and traefik_cert_file.stat.exists
+
+- name: Process Vault certificates for Traefik
+  when: >
+    vault_cert_file.stat.exists and
+    (not traefik_cert_file.stat.exists or
+     (cert_checksums.results | default([]) | length == 2 and
+      cert_checksums.results[0].stat.checksum != cert_checksums.results[1].stat.checksum))
+  block:
+    - name: Copy certificate to Traefik certs directory
+      ansible.builtin.copy:
+        src: "/opt/vault/certs/{{ fulldomain }}.crt"
+        dest: "{{ traefik_data_path }}/certs/{{ fulldomain }}.crt"
+        owner: root
+        group: root
+        mode: "0644"
+        remote_src: true
+      notify: Restart traefik stack
+
+    - name: Copy private key to Traefik certs directory
+      ansible.builtin.copy:
+        src: "/opt/vault/certs/{{ fulldomain }}.key"
+        dest: "{{ traefik_data_path }}/certs/{{ fulldomain }}.key"
+        owner: root
+        group: root
+        mode: "0600"
+        remote_src: true
+      notify: Restart traefik stack
+
+    - name: Generate Traefik dynamic TLS (dynamic/tls.yml)
+      ansible.builtin.template:
+        src: dynamic/tls.yml.j2
+        dest: "{{ traefik_data_path }}/dynamic/tls.yml"
+        owner: root
+        group: root
+        mode: "0644"
+      when: vault_cert_file.stat.exists
+      notify: Restart traefik stack
+
+- name: Deploy Traefik stack
+  ansible.builtin.include_role:
+    name: deploy-docker-stack
+  vars:
+    stack_name: traefik
+    stack_compose_path: "{{ traefik_data_path }}/compose.yml"

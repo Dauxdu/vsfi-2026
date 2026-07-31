@@ -1,0 +1,8 @@
+---
+postgres_image_tag: "18-alpine"
+postgres_data_path: "/opt/postgres"
+postgres_password: "postgres"
+postgres_user: "postgres"
+keycloak_db: "keycloak"
+keycloak_db_user: "keycloak"
+keycloak_db_password: "keycloak"

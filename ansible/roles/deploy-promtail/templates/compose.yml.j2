@@ -1,0 +1,20 @@
+services:
+  promtail:
+    image: grafana/promtail:{{ promtail_image_tag }}
+    command: -config.file=/etc/promtail/config.yml
+    volumes:
+      - {{ promtail_data_path }}/config.yml:/etc/promtail/config.yml:ro
+      - /var/log:/var/log:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - grafana-private
+    deploy:
+      mode: global
+      restart_policy:
+        condition: on-failure
+        delay: 10s
+        max_attempts: 5
+
+networks:
+  grafana-private:
+    external: true

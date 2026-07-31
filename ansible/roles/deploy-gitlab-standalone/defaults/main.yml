@@ -1,0 +1,7 @@
+---
+timezone: "Europe/Samara"
+
+gitlab_domain: "git.local"
+gitlab_root_password: "gitlab"
+gitlab_listen_port: 5080
+gitlab_config_path: "/etc/gitlab"

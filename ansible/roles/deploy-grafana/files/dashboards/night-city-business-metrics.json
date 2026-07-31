@@ -1,0 +1,67 @@
+{
+  "title": "VSFI Night City — Business Metrics",
+  "uid": "night-city-jobs-biz",
+  "tags": ["night-city", "business"],
+  "timezone": "browser",
+  "panels": [
+    {
+      "title": "Total Jobs in DB",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 6, "x": 0, "y": 0 },
+      "targets": [{ "expr": "jobs_total" }]
+    },
+    {
+      "title": "Jobs Generated (SSE stream)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 4 },
+      "targets": [
+        {
+          "expr": "rate(jobs_generated_total[5m])",
+          "legendFormat": "generated/s"
+        }
+      ]
+    },
+    {
+      "title": "Jobs Accepted",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 4 },
+      "targets": [
+        {
+          "expr": "rate(jobs_accepted_total[5m])",
+          "legendFormat": "accepted/s"
+        }
+      ]
+    },
+    {
+      "title": "Jobs by Status",
+      "type": "piechart",
+      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 12 },
+      "targets": [{ "expr": "jobs_by_status", "legendFormat": "{{status}}" }]
+    },
+    {
+      "title": "Jobs by Risk Level",
+      "type": "piechart",
+      "gridPos": { "h": 8, "w": 8, "x": 8, "y": 12 },
+      "targets": [{ "expr": "jobs_by_risk", "legendFormat": "{{risk}}" }]
+    },
+    {
+      "title": "Average Pay",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 6, "x": 18, "y": 0 },
+      "targets": [{ "expr": "jobs_average_pay" }]
+    },
+    {
+      "title": "SSE Connected Clients",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 6, "x": 12, "y": 0 },
+      "targets": [{ "expr": "jobs_sse_clients" }]
+    },
+    {
+      "title": "DB Up",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 6, "x": 6, "y": 0 },
+      "targets": [{ "expr": "jobs_backend_db_up" }]
+    }
+  ],
+  "schemaVersion": 39
+}

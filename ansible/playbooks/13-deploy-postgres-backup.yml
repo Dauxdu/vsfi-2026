@@ -1,0 +1,6 @@
+---
+- name: Deploy Backup
+  hosts: db
+  gather_facts: true
+  roles:
+    - role: deploy-postgres-backup

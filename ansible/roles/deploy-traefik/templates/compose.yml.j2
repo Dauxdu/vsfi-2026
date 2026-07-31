@@ -1,0 +1,36 @@
+services:
+  traefik:
+    image: traefik:{{ traefik_image_tag }}
+    ports:
+      - "80:80/tcp"
+      - "443:443/tcp"
+    volumes:
+      - {{ traefik_data_path }}/certs:/certs:ro
+      - {{ traefik_data_path }}/dynamic:/etc/traefik/dynamic:ro
+      - {{ traefik_data_path }}/traefik.yml:/etc/traefik/traefik.yml:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - traefik-public
+    deploy:
+      placement:
+        constraints:
+          - node.role == manager
+      restart_policy:
+        condition: on-failure
+        delay: 10s
+        max_attempts: 5
+      update_config:
+        parallelism: 1
+        delay: 5s
+        order: start-first
+        failure_action: rollback
+    healthcheck:
+      test: [ "CMD", "traefik", "healthcheck", "--ping" ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
+networks:
+  traefik-public:
+    external: true

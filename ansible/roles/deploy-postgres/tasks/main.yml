@@ -1,0 +1,26 @@
+---
+- name: Create PostgreSQL directories on db node
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+  loop:
+    - "{{ postgres_data_path }}"
+    - "{{ postgres_data_path }}/init-scripts"
+
+- name: Copy PostgreSQL init script to db node
+  ansible.builtin.template:
+    src: init-keycloak-db.sql.j2
+    dest: "{{ postgres_data_path }}/init-scripts/01-create-keycloak-db.sql"
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Deploy PostgreSQL stack
+  ansible.builtin.include_role:
+    name: deploy-docker-stack
+  vars:
+    stack_name: postgres
+    stack_compose_path: "{{ postgres_data_path }}/compose.yml"

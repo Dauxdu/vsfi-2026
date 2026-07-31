@@ -1,0 +1,9 @@
+tls:
+  certificates:
+    - certFile: /certs/{{ fulldomain }}.crt
+      keyFile: /certs/{{ fulldomain }}.key
+  stores:
+    default:
+      defaultCertificate:
+        certFile: /certs/{{ fulldomain }}.crt
+        keyFile: /certs/{{ fulldomain }}.key

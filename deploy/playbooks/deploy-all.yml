@@ -1,0 +1,24 @@
+---
+- name: Deploy PostgreSQL to db-vm
+  hosts: db
+  gather_facts: false
+  roles:
+    - role: postgres
+
+- name: Deploy ML-risk to app-vm
+  hosts: app
+  gather_facts: false
+  roles:
+    - role: ml_risk
+
+- name: Deploy backend to app-vm
+  hosts: app
+  gather_facts: false
+  roles:
+    - role: backend
+
+- name: Deploy frontend to app-vm
+  hosts: app
+  gather_facts: false
+  roles:
+    - role: frontend

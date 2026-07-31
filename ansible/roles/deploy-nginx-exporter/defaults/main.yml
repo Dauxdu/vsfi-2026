@@ -1,0 +1,5 @@
+---
+nginx_exporter_image_tag: "1.5.1"
+nginx_exporter_data_path: "/opt/lgtm/nginx-exporter"
+nginx_exporter_port: 9113
+nginx_target_url: "http://frontend:80/nginx_status"

@@ -1,0 +1,7 @@
+---
+frontend_domain: "team01.vsfi.team"
+frontend_image: "registry.team01.vsfi.team/team_1/night-city-net:latest"
+
+registry_url: "registry.team01.vsfi.team"
+registry_username: ""
+registry_password: ""

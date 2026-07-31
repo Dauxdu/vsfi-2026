@@ -1,0 +1,11 @@
+-- {{ ansible_managed }}
+-- Create Keycloak database and user
+
+-- Создаем пользователя
+CREATE USER {{ keycloak_db_user }} WITH ENCRYPTED PASSWORD '{{ keycloak_db_password }}';
+
+-- Создаем базу данных и назначаем владельца
+CREATE DATABASE {{ keycloak_db }} OWNER {{ keycloak_db_user }};
+
+-- Предоставляем все привилегии
+GRANT ALL PRIVILEGES ON DATABASE {{ keycloak_db }} TO {{ keycloak_db_user }};

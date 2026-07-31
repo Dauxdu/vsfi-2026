@@ -1,0 +1,17 @@
+---
+- name: Create cAdvisor directory
+  ansible.builtin.file:
+    path: "{{ cadvisor_data_path }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+  delegate_to: "{{ groups['swarm_managers'] | first }}"
+  run_once: true
+
+- name: Deploy cAdvisor stack
+  ansible.builtin.include_role:
+    name: deploy-docker-stack
+  vars:
+    stack_name: cadvisor
+    stack_compose_path: "{{ cadvisor_data_path }}/compose.yml"

@@ -1,0 +1,7 @@
+---
+nexus_domain: "nexus.localhost"
+nexus_registry_domain: "registry.localhost"
+nexus_image_tag: "3.94.0"
+nexus_data_path: "/opt/nexus"
+nexus_ui_port: 8081
+nexus_registry_port: 8083

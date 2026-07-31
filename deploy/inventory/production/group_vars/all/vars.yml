@@ -1,0 +1,34 @@
+---
+# === Registry ===
+registry_url: "registry.team01.vsfi.team"
+registry_username: "{{ vault_registry_username }}"
+registry_password: "{{ vault_registry_password }}"
+
+# === Images (переопределяются через -e в CI) ===
+frontend_image: "registry.team01.vsfi.team/team_1/night-city-net:latest"
+backend_image: "registry.team01.vsfi.team/team_1/night-city-job-generator:latest"
+ml_risk_image: "registry.team01.vsfi.team/team_1/ml-risk:latest"
+postgres_image: "registry.team01.vsfi.team/postgres:18-alpine"
+telemetry_image: "registry.team01.vsfi.team/team_1/telemetry:latest"
+
+# === Frontend ===
+frontend_domain: "team01.vsfi.team"
+
+# === Backend ===
+backend_port: "8080"
+backend_api_key: "{{ vault_backend_api_key }}"
+backend_network_node: "NIGHT_CITY_PRIMARY"
+backend_log_format: "json"
+backend_ml_risk_url: "http://ml-risk:8090"
+
+# === PostgreSQL ===
+postgres_user: "vsfi"
+postgres_password: "{{ vault_postgres_password }}"
+postgres_db: "vsfi"
+postgres_host: "db_postgres"
+postgres_port: "5432"
+postgres_sslmode: "disable"
+
+# === ML Risk ===
+ml_risk_port: "8090"
+ml_risk_log_format: "json"
