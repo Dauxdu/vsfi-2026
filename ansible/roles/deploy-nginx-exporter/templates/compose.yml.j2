@@ -4,7 +4,6 @@ services:
     command:
       - '--nginx.scrape-uri={{ nginx_target_url }}'
     networks:
-      - traefik-public
       - grafana-private
     deploy:
       placement:
@@ -16,7 +15,5 @@ services:
         max_attempts: 3
 
 networks:
-  traefik-public:
-    external: true
   grafana-private:
     external: true
