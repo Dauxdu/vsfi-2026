@@ -39,6 +39,12 @@ docker_overlay_networks:
     encrypted: true
   - name: postgres-internal
     encrypted: true
+    internal: true
+  - name: frontend-internal
+    encrypted: true
+  - name: backend-internal
+    encrypted: true
+    internal: true
 
 # === Vault ===
 vault_domain: "vault.{{ fulldomain }}"

@@ -4,6 +4,7 @@
     name: "{{ item.name }}"
     driver: overlay
     attachable: true
+    internal: "{{ item.internal | default(false) }}"
     scope: swarm
     driver_options: "{{ {'encrypted': 'true'} if item.encrypted | default(false) else omit }}"
     state: present
