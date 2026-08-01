@@ -1,0 +1,21 @@
+FROM registry.team01.vsfi.team/debian:bookworm
+
+WORKDIR /var/app
+
+# Self-signed CA
+COPY ./deploy/ca.crt /usr/local/share/ca-certificates/vsfi-root-ca.crt
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends ca-certificates \
+    && update-ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN mkdir -p /var/app/data
+
+COPY ./deploy/telemetry ./telemetry
+COPY ./deploy/license.txt ./data/license.txt
+
+ENV RUST_LOG=info
+
+EXPOSE 8080
+
+CMD ["./telemetry"]

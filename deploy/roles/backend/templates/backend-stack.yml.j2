@@ -29,6 +29,8 @@ services:
   telemetry-backend:
     image: "{{ telemetry_image }}"
     environment:
+      HOST: "0.0.0.0"
+      PORT: "8080"  
       RUST_LOG: "{{ telemetry_rust_log }}"
       RUST_BACKTRACE: full
       DB_URL: "postgres://{{ postgres_user }}:{{ postgres_password }}@{{ postgres_host }}:{{ postgres_port }}/{{ postgres_db }}?sslmode={{ postgres_sslmode }}"
