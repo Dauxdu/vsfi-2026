@@ -9,6 +9,7 @@ services:
       LOG_FORMAT: "{{ backend_log_format }}"
       ML_RISK_URL: "{{ backend_ml_risk_url }}"
     networks:
+      - grafana-internal
       - frontend-internal
       - backend-internal
     deploy:
@@ -53,6 +54,8 @@ services:
         failure_action: rollback
 
 networks:
+  grafana-internal:
+    external: true
   frontend-internal:
     external: true
   backend-internal:

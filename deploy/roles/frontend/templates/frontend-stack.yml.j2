@@ -3,6 +3,7 @@ services:
     image: "{{ frontend_image }}"
     networks:
       - traefik-public
+      - grafana-internal
       - frontend-internal
     deploy:
       replicas: 1
@@ -28,6 +29,8 @@ services:
 
 networks:
   traefik-public:
+    external: true
+  grafana-internal:
     external: true
   frontend-internal:
     external: true
