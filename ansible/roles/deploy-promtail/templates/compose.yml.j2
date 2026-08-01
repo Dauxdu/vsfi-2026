@@ -7,7 +7,7 @@ services:
       - /var/log:/var/log:ro
       - /var/run/docker.sock:/var/run/docker.sock:ro
     networks:
-      - grafana-private
+      - grafana-internal
     deploy:
       mode: global
       restart_policy:
@@ -16,5 +16,5 @@ services:
         max_attempts: 5
 
 networks:
-  grafana-private:
+  grafana-internal:
     external: true

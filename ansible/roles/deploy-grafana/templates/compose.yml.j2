@@ -3,7 +3,7 @@ services:
     image: grafana/grafana-oss:{{ grafana_image_tag }}
     networks:
       - traefik-public
-      - grafana-private
+      - grafana-internal
     volumes:
       - grafana_data:/var/lib/grafana
       - {{ grafana_data_path }}/provisioning:/etc/grafana/provisioning:ro
@@ -45,5 +45,5 @@ volumes:
 networks:
   traefik-public:
     external: true
-  grafana-private:
+  grafana-internal:
     external: true

@@ -35,13 +35,15 @@ docker_password: "{{ vault_docker_password }}"
 docker_overlay_networks:
   - name: traefik-public
     encrypted: false
-  - name: grafana-private
+  - name: grafana-internal
     encrypted: true
+    internal: true
   - name: postgres-internal
     encrypted: true
     internal: true
   - name: frontend-internal
     encrypted: true
+    internal: true
   - name: backend-internal
     encrypted: true
     internal: true

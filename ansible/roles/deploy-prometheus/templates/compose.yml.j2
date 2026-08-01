@@ -12,7 +12,7 @@ services:
       - prometheus_data:/prometheus
     networks:
       - traefik-public
-      - grafana-private
+      - grafana-internal
     deploy:
       labels:
         - "traefik.enable=true"
@@ -35,5 +35,5 @@ volumes:
 networks:
   traefik-public:
     external: true
-  grafana-private:
+  grafana-internal:
     external: true

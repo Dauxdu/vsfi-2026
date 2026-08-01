@@ -7,7 +7,7 @@ services:
       - '--web.external-url=https://{{ alertmanager_domain }}'
     networks:
       - traefik-public
-      - grafana-private
+      - grafana-internal
     volumes:
       - "{{ alertmanager_data_path }}/config.yml:/etc/alertmanager/config.yml:ro"
       - alertmanager_data:/alertmanager
@@ -33,5 +33,5 @@ volumes:
 networks:
   traefik-public:
     external: true
-  grafana-private:
+  grafana-internal:
     external: true

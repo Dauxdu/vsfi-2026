@@ -4,7 +4,8 @@ services:
     command:
       - '--nginx.scrape-uri={{ nginx_target_url }}'
     networks:
-      - grafana-private
+      - grafana-internal
+      - frontend-internal
     deploy:
       placement:
         constraints:
@@ -15,5 +16,7 @@ services:
         max_attempts: 3
 
 networks:
-  grafana-private:
+  frontend-internal:
+    external: true
+  grafana-internal:
     external: true
