@@ -13,5 +13,10 @@
     }{% if not loop.last %},{% endif %}
 {% endfor %}
   ],
-  "exec-opts": ["native.cgroupdriver=systemd"]
+  "exec-opts": ["native.cgroupdriver=systemd"],
+  "insecure-registries": [
+{% for registry in docker_registries %}
+    "{{ registry }}"{% if not loop.last %},{% endif %}
+{% endfor %}
+  ]
 }

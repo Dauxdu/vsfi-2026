@@ -35,6 +35,9 @@ COPY --from=builder /app/jobs-backend /app/jobs-backend
 RUN adduser -D -u 1000 appuser && chown -R appuser:appuser /app
 USER appuser
 
+HEALTHCHECK --interval=15s --timeout=3s --retries=3 --start-period=10s \
+    CMD wget --quiet --tries=1 --spider --no-check-certificate http://127.0.0.1:8080/metrics || exit 1
+
 EXPOSE 8080
 
 CMD ["/app/jobs-backend"]
