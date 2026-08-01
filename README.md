@@ -206,6 +206,8 @@
 - **Описание:** Подключите SSO [Keycloak OIDC/SAML] к Grafana на `gr.teamN.vsfi.team`.
 - **Критерии сдачи:** Вход в Grafana через Keycloak [не только локальный admin]. После логина открывается UI Grafana.
 
+---
+
 ### 🔶 BONUS (VSFI-2025)
 
 **30. Мониторинг сертификатов и доменов (bonus-01)**
