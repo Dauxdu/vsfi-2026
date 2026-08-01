@@ -14,7 +14,7 @@
     - role: deploy-prometheus
     - role: deploy-alertmanager
     - role: deploy-loki
-    - role: deploy-tempo
+    #- role: deploy-tempo
 
 - name: Deploy cAdvisor from Swarm manager
   hosts: mgmt
