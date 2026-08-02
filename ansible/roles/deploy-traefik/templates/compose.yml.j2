@@ -31,6 +31,37 @@ services:
       retries: 3
       start_period: 30s
 
+  cert-renewer:
+    image: alpine:3.22
+    command: ["/bin/sh", "-c", "apk add --no-cache openssl && /bin/sh /opt/cert-renew/cert-renew.sh"]
+    environment:
+      VAULT_ADDR: "http://vault:8200"
+      VAULT_TOKEN_FILE: "/run/secrets/vault_keys"
+      PKI_PATH: "{{ vault_int_pki }}"
+      PKI_ROLE: "{{ vault_role_name}}"
+      COMMON_NAME: "{{ fulldomain }}"
+      ALT_NAMES: "{{ fulldomain }},*.{{ fulldomain }}"
+      CERT_TTL: "{{ vault_cert_ttl }}"
+    volumes:
+      - {{ traefik_data_path }}/certs:/certs
+      - {{ traefik_data_path }}/cert-renew.sh:/opt/cert-renew/cert-renew.sh:ro
+    secrets:
+      - vault_keys
+    networks:
+      - traefik-public
+    deploy:
+      placement:
+        constraints:
+          - node.role == manager
+      restart_policy:
+        condition: any
+        delay: 10s
+        max_attempts: 5
+
 networks:
   traefik-public:
     external: true
+
+secrets:
+  vault_keys:
+    file: /opt/vault/vault_keys.json

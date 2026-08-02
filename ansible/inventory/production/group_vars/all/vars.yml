@@ -51,6 +51,16 @@ docker_overlay_networks:
 # === Vault ===
 vault_domain: "vault.{{ fulldomain }}"
 vault_allowed_domain: "{{ fulldomain }}"
+vault_role_name: "team01"
+
+# PKI configuration
+vault_root_pki: "pki-root"
+vault_int_pki: "pki-int"
+
+# TTL settings
+vault_cert_ttl: "720h" # 30 days
+vault_default_lease_ttl: "168h" # 7 days
+vault_max_lease_ttl: "720h" # 30 days
 
 # === Portainer ===
 portainer_domain: "prt.{{ fulldomain }}"

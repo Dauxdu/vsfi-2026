@@ -37,6 +37,46 @@
     mode: "0400"
   when: vault_init_result is changed
 
+- name: Check if Docker secret 'vault_keys.json' already exists
+  ansible.builtin.command:
+    cmd: docker secret inspect vault_keys.json
+  register: docker_secret_check
+  changed_when: false
+  failed_when: false
+  delegate_to: "{{ groups['swarm_managers'][0] }}"
+  run_once: true
+
+- name: Remove outdated Docker secret if vault was re-initialized
+  ansible.builtin.command:
+    cmd: docker secret rm vault_keys.json
+  when:
+    - vault_init_result is changed
+    - docker_secret_check.rc == 0
+  delegate_to: "{{ groups['swarm_managers'][0] }}"
+  run_once: true
+  register: secret_rm_result
+  failed_when: false
+
+- name: Create Docker secret 'vault_keys.json'
+  ansible.builtin.command:
+    cmd: docker secret create vault_keys.json {{ vault_data_path }}/vault_keys.json
+  when: >
+    docker_secret_check.rc != 0
+    or (vault_init_result is changed)
+  delegate_to: "{{ groups['swarm_managers'][0] }}"
+  run_once: true
+  register: secret_create_result
+  changed_when: secret_create_result.rc == 0
+
+- name: Verify Docker secret was created
+  ansible.builtin.command:
+    cmd: docker secret inspect vault_keys.json
+  register: secret_verify
+  changed_when: false
+  delegate_to: "{{ groups['swarm_managers'][0] }}"
+  run_once: true
+  when: secret_create_result is changed
+
 - name: Set Vault credentials from new initialization
   ansible.builtin.set_fact:
     vault_token: "{{ vault_init_result.json.root_token }}"

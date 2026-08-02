@@ -85,6 +85,14 @@
       when: vault_cert_file.stat.exists
       notify: Restart traefik stack
 
+- name: Copy cert-renew script to Traefik directory
+  ansible.builtin.copy:
+    src: cert-renew.sh
+    dest: "{{ traefik_data_path }}/cert-renew.sh"
+    owner: root
+    group: root
+    mode: "0755"
+
 - name: Deploy Traefik stack
   ansible.builtin.include_role:
     name: deploy-docker-stack
