@@ -15,6 +15,7 @@
     - role: deploy-alertmanager
     - role: deploy-loki
     #- role: deploy-tempo
+    - role: deploy-blackbox-exporter
 
 - name: Deploy cAdvisor from Swarm manager
   hosts: mgmt

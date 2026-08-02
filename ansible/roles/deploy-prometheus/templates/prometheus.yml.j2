@@ -65,3 +65,51 @@ scrape_configs:
       - targets: ['jobs-backend:8080']
         labels:
           service: 'night-city-job-generator'
+
+  - job_name: 'vault'
+    metrics_path: /v1/sys/metrics
+    params:
+      format: [prometheus]
+    static_configs:
+      - targets: ['vault:8200']
+        labels:
+          nodename: '{{ groups["mgmt"][0] }}'
+          service: 'vault'
+
+  - job_name: 'blackbox-tls'
+    metrics_path: /probe
+    params:
+      module: [tls_connect]
+    static_configs:
+      - targets:
+{% for target in blackbox_tls_targets %}
+          - '{{ target }}'
+{% endfor %}
+        labels:
+          probe_type: 'tls'
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: blackbox-exporter:9115
+
+  - job_name: 'blackbox-http'
+    metrics_path: /probe
+    params:
+      module: [https_2xx]
+    static_configs:
+      - targets:
+{% for target in blackbox_http_targets %}
+          - '{{ target }}'
+{% endfor %}
+        labels:
+          probe_type: 'http'
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: blackbox-exporter:9115

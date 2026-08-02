@@ -1,0 +1,24 @@
+services:
+  blackbox-exporter:
+    image: prom/blackbox-exporter:{{ blackbox_exporter_image_tag }}
+    command:
+      - '--config.file=/etc/blackbox/config.yml'
+    volumes:
+      - {{ blackbox_exporter_data_path }}/config.yml:/etc/blackbox/config.yml:ro
+    networks:
+      - traefik-public
+      - grafana-internal
+    deploy:
+      placement:
+        constraints:
+          - node.hostname == {{ groups['mntr'][0] }}
+      restart_policy:
+        condition: on-failure
+        delay: 10s
+        max_attempts: 3
+
+networks:
+  traefik-public:
+    external: true
+  grafana-internal:
+    external: true

@@ -17,10 +17,17 @@ services:
             {
               "tcp": {
                 "address": "0.0.0.0:{{ vault_port }}",
-                "tls_disable": true
+                "tls_disable": true,
+                "telemetry": {
+                  "unauthenticated_metrics_access": true
+                }
               }
             }
           ],
+          "telemetry": {
+            "prometheus_retention_time": "60s",
+            "disable_hostname": true
+          },
           "default_lease_ttl": "{{ vault_default_lease_ttl }}",
           "max_lease_ttl": "{{ vault_max_lease_ttl }}",
           "ui": true,
@@ -31,6 +38,7 @@ services:
       - vault_data:/vault/file
     networks:
       - traefik-public
+      - grafana-internal
     ports:
       - "127.0.0.1:{{ vault_port }}:{{ vault_port }}/tcp"
     deploy:
@@ -59,4 +67,6 @@ volumes:
 
 networks:
   traefik-public:
+    external: true
+  grafana-internal:
     external: true

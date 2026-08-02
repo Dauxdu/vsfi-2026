@@ -1,0 +1,33 @@
+# {{ ansible_managed }}
+modules:
+  # TLS-проверка: handshake + expiry сертификата
+  tls_connect:
+    prober: tcp
+    timeout: 10s
+    tcp:
+      tls: true
+      tls_config:
+        insecure_skip_verify: true   # self-signed CA от Vault
+        server_name: ""              # берётся из target
+
+  # HTTP-проверка: доступность + TLS
+  https_2xx:
+    prober: http
+    timeout: 10s
+    http:
+      valid_status_codes: [200, 301, 302, 307, 401, 403]
+      method: GET
+      tls_config:
+        insecure_skip_verify: true
+      preferred_ip_protocol: ip4
+
+  # HTTP-проверка с ожиданием 200
+  https_strict:
+    prober: http
+    timeout: 10s
+    http:
+      valid_status_codes: [200]
+      method: GET
+      tls_config:
+        insecure_skip_verify: true
+      preferred_ip_protocol: ip4

@@ -2,3 +2,7 @@
 prometheus_domain: "prom.localhost"
 prometheus_image_tag: "v3-distroless"
 prometheus_data_path: "/opt/lgtm/prometheus"
+
+# Blackbox targets (передаются из group_vars)
+blackbox_tls_targets: []
+blackbox_http_targets: []
