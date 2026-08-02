@@ -72,6 +72,8 @@
       echo "Certificate and private key do not match" >&2
       exit 1
     fi
+  args:
+    executable: /bin/bash
   register: key_match_check
   changed_when: false
   failed_when: key_match_check.rc != 0
