@@ -11,8 +11,8 @@ COMMON_NAME="${COMMON_NAME}"
 ALT_NAMES="${ALT_NAMES}"
 CERT_TTL="${CERT_TTL:-720h}"
 CERT_DIR="${CERT_DIR:-/certs}"
-CHECK_INTERVAL="${CHECK_INTERVAL:-3600}"    # проверка каждые 1 час
-RENEW_THRESHOLD="${RENEW_THRESHOLD:-86400}"    # обновить за 24 ч до истечения
+CHECK_INTERVAL="${CHECK_INTERVAL:-3600}"
+RENEW_THRESHOLD="${RENEW_THRESHOLD:-86400}"
 
 CERT_FILE="${CERT_DIR}/${COMMON_NAME}.crt"
 KEY_FILE="${CERT_DIR}/${COMMON_NAME}.key"
@@ -22,10 +22,9 @@ log() { echo "[$(date -u '+%Y-%m-%dT%H:%M:%SZ')] $*"; }
 # ── Чтение токена ─────────────────────────────────────────────
 get_token() {
     if [ -f "$VAULT_TOKEN_FILE" ]; then
-        # vault_keys.json: {"root_token":"...","keys_base64":[...]}
-        TOKEN=$(cat "$VAULT_TOKEN_FILE" | sed -n 's/.*"root_token"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p')
+        TOKEN=$(jq -r '.root_token' "$VAULT_TOKEN_FILE" 2>/dev/null)
     fi
-    if [ -z "${TOKEN:-}" ]; then
+    if [ -z "${TOKEN:-}" ] || [ "$TOKEN" = "null" ]; then
         log "ERROR: cannot read Vault token from ${VAULT_TOKEN_FILE}"
         return 1
     fi
@@ -33,16 +32,13 @@ get_token() {
 
 # ── Проверка: нужен ли новый сертификат? ──────────────────────
 needs_renewal() {
-    # Файла нет → нужен
     [ ! -f "$CERT_FILE" ] && return 0
     [ ! -f "$KEY_FILE" ]  && return 0
     
-    # Сертификат истекает раньше порога → нужен
     if ! openssl x509 -in "$CERT_FILE" -checkend "$RENEW_THRESHOLD" -noout 2>/dev/null; then
         return 0
     fi
     
-    # Ключ не совпадает с сертификатом → нужен
     cert_pub=$(openssl x509 -noout -pubkey -in "$CERT_FILE" 2>/dev/null || true)
     key_pub=$(openssl pkey -pubout -in "$KEY_FILE" 2>/dev/null || true)
     [ "$cert_pub" != "$key_pub" ] && return 0
@@ -64,21 +60,17 @@ issue_cert() {
             \"format\": \"pem\",
             \"private_key_format\": \"pem\"
         }" \
-        "${VAULT_ADDR}/v1/${PKI_PATH}/issue/${PKI_ROLE}" 2>/dev/null) || {
+        "${VAULT_ADDR}/v1/${PKI_PATH}/issue/${PKI_ROLE}") || {
         log "ERROR: Vault PKI issue request failed"
         return 1
     }
     
-    # Извлекаем поля через sed (без jq в alpine)
-    NEW_CERT=$(echo "$RESPONSE" | sed -n 's/.*"certificate":"\(-----BEGIN CERTIFICATE-----[^"]*\)".*/\1/p' | sed 's/\\n/\n/g')
-    NEW_KEY=$(echo "$RESPONSE"  | sed -n 's/.*"private_key":"\(-----BEGIN RSA PRIVATE KEY-----[^"]*\)".*/\1/p'  | sed 's/\\n/\n/g')
-    # Vault может вернуть EC или PKCS8 ключ
-    if [ -z "$NEW_KEY" ]; then
-        NEW_KEY=$(echo "$RESPONSE" | sed -n 's/.*"private_key":"\(-----BEGIN PRIVATE KEY-----[^"]*\)".*/\1/p' | sed 's/\\n/\n/g')
-    fi
-    CA_CHAIN=$(echo "$RESPONSE" | sed -n 's/.*"ca_chain":\["\(-----BEGIN CERTIFICATE-----[^"]*\)".*/\1/p' | sed 's/\\n/\n/g')
+    NEW_CERT=$(echo "$RESPONSE" | jq -r '.data.certificate')
+    NEW_KEY=$(echo "$RESPONSE"  | jq -r '.data.private_key')
+    CA_CHAIN=$(echo "$RESPONSE" | jq -r '.data.ca_chain | join("\n")')
     
-    if [ -z "$NEW_CERT" ] || [ -z "$NEW_KEY" ]; then
+    if [ -z "$NEW_CERT" ] || [ "$NEW_CERT" = "null" ] || \
+    [ -z "$NEW_KEY" ]  || [ "$NEW_KEY" = "null" ]; then
         log "ERROR: empty certificate or key in Vault response"
         return 1
     fi
@@ -86,7 +78,7 @@ issue_cert() {
     # Атомарная запись через временные файлы
     TMP_DIR=$(mktemp -d)
     printf '%s\n%s\n' "$NEW_CERT" "$CA_CHAIN" > "${TMP_DIR}/cert.pem"
-    printf '%s\n' "$NEW_KEY"                   > "${TMP_DIR}/key.pem"
+    printf '%s\n' "$NEW_KEY"                  > "${TMP_DIR}/key.pem"
     
     # Валидация: ключ совпадает с сертификатом
     c_pub=$(openssl x509 -noout -pubkey -in "${TMP_DIR}/cert.pem" 2>/dev/null)
