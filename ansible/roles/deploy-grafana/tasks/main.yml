@@ -32,24 +32,13 @@
         group: 472
         mode: "0644"
 
-    - name: Find dashboard JSON files
-      ansible.builtin.find:
-        paths: "{{ role_path }}/files/dashboards"
-        patterns: "*.json"
-      delegate_to: localhost
-      become: false
-      register: dashboard_files
-
-    - name: Copy Grafana dashboard JSON files
+    - name: Copy Grafana dashboard JSON files with subfolders
       ansible.builtin.copy:
-        src: "{{ item.path }}"
-        dest: "{{ grafana_data_path }}/dashboards/{{ item.path | basename }}"
+        src: dashboards/
+        dest: "{{ grafana_data_path }}/dashboards/"
         owner: "472"
         group: "472"
         mode: "0644"
-      loop: "{{ dashboard_files.files }}"
-      loop_control:
-        label: "{{ item.path | basename }}"
 
 - name: Deploy Grafana stack
   ansible.builtin.include_role:

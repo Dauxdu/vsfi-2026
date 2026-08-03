@@ -1,7 +1,7 @@
 apiVersion: 1
 
 providers:
-  - name: "default"
+  - name: "infrastructure"
     orgId: 1
     folder: "Infrastructure"
     folderUid: "infra"
@@ -10,5 +10,17 @@ providers:
     updateIntervalSeconds: 30
     allowUiUpdates: true
     options:
-      path: /var/lib/grafana/dashboards
+      path: /var/lib/grafana/dashboards/infra
+      foldersFromFilesStructure: false
+
+  - name: "vsfi"
+    orgId: 1
+    folder: "VSFI"
+    folderUid: "vsfi"
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 30
+    allowUiUpdates: true
+    options:
+      path: /var/lib/grafana/dashboards/vsfi
       foldersFromFilesStructure: false
