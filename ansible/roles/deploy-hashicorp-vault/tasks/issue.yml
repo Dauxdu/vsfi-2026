@@ -33,9 +33,11 @@
       ttl: "{{ vault_cert_ttl }}"
       format: "pem"
       private_key_format: "pem"
-    status_code: [200, 204]
+      exclude_cn_from_sans: true
+    status_code: [200]
   register: issued_cert
   when: not cert_file.stat.exists or (cert_file.stat.exists and cert_validity.rc != 0)
+  no_log: true
 
 # === ATOMIC WRITE ===
 - name: Create temporary directory for new certs
@@ -64,10 +66,8 @@
 - name: Verify key matches certificate before applying
   ansible.builtin.shell: |
     set -euo pipefail
-
     cert_pub=$(openssl x509 -noout -pubkey -in /tmp/vault/{{ vault_allowed_domain }}.crt)
     key_pub=$(openssl pkey -pubout -in /tmp/vault/{{ vault_allowed_domain }}.key)
-
     if [ "$cert_pub" != "$key_pub" ]; then
       echo "Certificate and private key do not match" >&2
       exit 1

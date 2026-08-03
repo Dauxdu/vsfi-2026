@@ -35,56 +35,40 @@
     owner: root
     group: root
     mode: "0400"
-  when: vault_init_result is changed
-
-- name: Check if Docker secret 'vault_keys.json' already exists
-  ansible.builtin.command:
-    cmd: docker secret inspect vault_keys.json
-  register: docker_secret_check
-  changed_when: false
-  failed_when: false
-  delegate_to: "{{ groups['swarm_managers'][0] }}"
-  run_once: true
-
-- name: Remove outdated Docker secret if vault was re-initialized
-  ansible.builtin.command:
-    cmd: docker secret rm vault_keys.json
   when:
-    - vault_init_result is changed
-    - docker_secret_check.rc == 0
-  delegate_to: "{{ groups['swarm_managers'][0] }}"
-  run_once: true
-  register: secret_rm_result
-  failed_when: false
+    - vault_init_result is defined
+    - vault_init_result is not skipped
+    - vault_init_result.json is defined
+  no_log: true
 
-- name: Create Docker secret 'vault_keys.json'
-  ansible.builtin.command:
-    cmd: docker secret create vault_keys.json {{ vault_data_path }}/vault_keys.json
-  when: >
-    docker_secret_check.rc != 0
-    or (vault_init_result is changed)
-  delegate_to: "{{ groups['swarm_managers'][0] }}"
-  run_once: true
-  register: secret_create_result
-  changed_when: secret_create_result.rc == 0
-
-- name: Verify Docker secret was created
-  ansible.builtin.command:
-    cmd: docker secret inspect vault_keys.json
-  register: secret_verify
-  changed_when: false
-  delegate_to: "{{ groups['swarm_managers'][0] }}"
-  run_once: true
-  when: secret_create_result is changed
-
+# === Credentials ===
 - name: Set Vault credentials from new initialization
   ansible.builtin.set_fact:
     vault_token: "{{ vault_init_result.json.root_token }}"
     vault_unseal_key: "{{ vault_init_result.json.keys_base64[0] }}"
-  when: vault_init_result is changed
+  when:
+    - vault_init_result is defined
+    - vault_init_result is not skipped
+    - vault_init_result.json is defined
+    - vault_init_result.json.root_token is defined
+  no_log: true
 
-- name: Read existing Vault keys if already initialized
+- name: Load existing Vault keys if already initialized
+  when:
+    - vault_init_status.json is defined
+    - vault_init_status.json.initialized | default(false)
+    - vault_init_result is skipped or (vault_init_result is defined and not (vault_init_result.json is defined))
   block:
+    - name: Check if vault_keys.json exists
+      ansible.builtin.stat:
+        path: "{{ vault_data_path }}/vault_keys.json"
+      register: vault_keys_file_stat
+
+    - name: Fail if vault_keys.json is missing
+      ansible.builtin.fail:
+        msg: "Vault is initialized but {{ vault_data_path }}/vault_keys.json is missing! Cannot proceed without unseal key."
+      when: not vault_keys_file_stat.stat.exists
+
     - name: Read Vault keys from disk
       ansible.builtin.slurp:
         src: "{{ vault_data_path }}/vault_keys.json"
@@ -94,8 +78,8 @@
       ansible.builtin.set_fact:
         vault_token: "{{ (vault_keys_file.content | b64decode | from_json).root_token }}"
         vault_unseal_key: "{{ (vault_keys_file.content | b64decode | from_json).keys_base64[0] }}"
-  when: vault_init_status.json is defined and vault_init_status.json.initialized
-
+  no_log: true
+# === Unseal ===
 - name: Check Vault seal status
   ansible.builtin.uri:
     url: "http://127.0.0.1:{{ vault_port }}/v1/sys/seal-status"
@@ -110,6 +94,21 @@
     body_format: json
     body:
       key: "{{ vault_unseal_key }}"
+    status_code: [200]
   when:
-    - vault_seal_status.json.sealed
+    - vault_seal_status.json is defined
+    - vault_seal_status.json.sealed | default(false)
     - vault_unseal_key is defined
+  register: unseal_result
+  retries: 3
+  delay: 2
+  until: unseal_result is not failed
+
+- name: Verify Vault is unsealed
+  ansible.builtin.uri:
+    url: "http://127.0.0.1:{{ vault_port }}/v1/sys/seal-status"
+    method: GET
+    status_code: [200]
+  register: final_seal_status
+  when: unseal_result is changed
+  failed_when: final_seal_status.json.sealed

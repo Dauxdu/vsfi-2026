@@ -2,15 +2,14 @@ services:
   vault:
     image: hashicorp/vault:{{ vault_image_tag }}
     command: server
-    cap_add:
-      - IPC_LOCK
     environment:
       VAULT_ADDR: "http://127.0.0.1:{{ vault_port }}"
       VAULT_LOCAL_CONFIG: |
         {
           "storage": {
-            "file": {
-              "path": "/vault/file"
+            "raft": {
+              "path": "/vault/file",
+              "node_id": "{{ vault_raft_node_id }}"
             }
           },
           "listener": [
@@ -32,6 +31,7 @@ services:
           "max_lease_ttl": "{{ vault_max_lease_ttl }}",
           "ui": true,
           "api_addr": "https://{{ vault_domain }}",
+          "cluster_addr": "https://{{ vault_domain }}:8201",
           "disable_mlock": true
         }
     volumes:
@@ -47,7 +47,7 @@ services:
         - "traefik.http.routers.vault.rule=Host(`{{ vault_domain }}`)"
         - "traefik.http.routers.vault.entrypoints=websecure"
         - "traefik.http.routers.vault.tls=true"
-        - "traefik.http.services.vault.loadbalancer.server.port=8200"
+        - "traefik.http.services.vault.loadbalancer.server.port={{ vault_port }}"
         - "traefik.swarm.network=traefik-public"
       placement:
         constraints:
