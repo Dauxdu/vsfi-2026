@@ -1,3 +1,4 @@
+.ansible/
 .vscode/
 
 .vault_password
