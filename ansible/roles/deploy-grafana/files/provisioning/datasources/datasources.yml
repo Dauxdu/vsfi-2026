@@ -6,8 +6,8 @@ deleteDatasources:
     orgId: 1
   - name: Loki
     orgId: 1
-  #- name: Tempo
-  #  orgId: 1
+  # - name: Tempo
+  #   orgId: 1
 
 datasources:
   - name: Alertmanager
@@ -44,28 +44,28 @@ datasources:
           url: "$${__value.raw}"
     version: 1
 
-  #- name: Tempo
-  #  type: tempo
-  #  uid: tempo
-  #  access: proxy
-  #  url: http://tempo:3200
-  #  editable: false
-  #  jsonData:
-  #    httpMethod: GET
-  #    serviceMap:
-  #      datasourceUid: Prometheus
-  #    tracesToLogsV2:
-  #      datasourceUid: Loki
-  #      filterByTraceID: true
-  #      filterBySpanID: false
-  #      tags:
-  #        - key: service.name
-  #          value: service
-  #    tracesToMetrics:
-  #      datasourceUid: Prometheus
-  #      tags:
-  #        - key: service.name
-  #          value: service
-  #    nodeGraph:
-  #      enabled: true
-  #  version: 1
+  # - name: Tempo
+  #   type: tempo
+  #   uid: tempo
+  #   access: proxy
+  #   url: http://tempo:3200
+  #   editable: false
+  #   jsonData:
+  #     httpMethod: GET
+  #     serviceMap:
+  #       datasourceUid: Prometheus
+  #     tracesToLogsV2:
+  #       datasourceUid: Loki
+  #       filterByTraceID: true
+  #       filterBySpanID: false
+  #       tags:
+  #         - key: service.name
+  #           value: service
+  #     tracesToMetrics:
+  #       datasourceUid: Prometheus
+  #       tags:
+  #         - key: service.name
+  #           value: service
+  #     nodeGraph:
+  #       enabled: true
+  #   version: 1

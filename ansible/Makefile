@@ -15,8 +15,8 @@ help:
 
 .PHONY: lint
 lint:
-	ansible-lint
 	yamllint .
+	ansible-lint
 
 .PHONY: syntax
 syntax:

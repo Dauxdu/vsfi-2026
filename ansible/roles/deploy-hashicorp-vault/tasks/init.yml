@@ -66,7 +66,7 @@
 
     - name: Fail if vault_keys.json is missing
       ansible.builtin.fail:
-        msg: "Vault is initialized but {{ vault_data_path }}/vault_keys.json is missing! Cannot proceed without unseal key."
+        msg: "Vault is initialized but {{ vault_data_path }}/vault_keys.json is missing"
       when: not vault_keys_file_stat.stat.exists
 
     - name: Read Vault keys from disk

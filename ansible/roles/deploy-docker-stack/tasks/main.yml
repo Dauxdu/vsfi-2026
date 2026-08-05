@@ -4,7 +4,7 @@
     stack_manager_host: "{{ groups['swarm_managers'][0] }}"
   run_once: true
 
-- name: "Generate '{{ stack_name }}' compose file"
+- name: "Generate compose file '{{ stack_name }}'"
   ansible.builtin.template:
     src: compose.yml.j2
     dest: "{{ stack_compose_path }}"
@@ -24,7 +24,7 @@
   delegate_to: "{{ stack_manager_host }}"
   run_once: true
 
-- name: "Display '{{ stack_name }}' stack deploy result"
+- name: "Display stack deploy result '{{ stack_name }}'"
   ansible.builtin.debug:
     var: stack_deploy_result.stdout_lines
   delegate_to: "{{ stack_manager_host }}"

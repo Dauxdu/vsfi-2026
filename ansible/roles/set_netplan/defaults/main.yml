@@ -1,0 +1,2 @@
+---
+set_netplan_config_file: "01-netcfg.yaml"

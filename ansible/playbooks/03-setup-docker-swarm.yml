@@ -2,10 +2,10 @@
   hosts: all
   gather_facts: true
   roles:
-    - role: set-docker-swarm
+    - role: set_docker_swarm
 
 - name: Create Docker overlay networks
   hosts: swarm_managers
   gather_facts: false
   roles:
-    - role: set-docker-networks
+    - role: set_docker_network

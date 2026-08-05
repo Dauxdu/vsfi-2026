@@ -3,15 +3,19 @@
   hosts: all
   gather_facts: true
   roles:
-    - role: set-netplan
-    - role: set-hostname
-    - role: set-timezone
-    - role: set-repository
+    - role: set_netplan
+    - role: set_hostname
+    - role: set_timezone
+    - role: set_repository
       when:
-        - apt_urls | default([]) | length > 0
-        - apt_repositories | default([]) | length > 0
-    - role: set-packages
-    - role: set-users
-    - role: set-firewall
-    - role: set-ssh
-    - role: set-motd
+        - set_repository_apt_urls | default([]) | length > 0
+        - set_repository_repositories | default([]) | length > 0
+    - role: set_packages
+    - role: set_users
+    - role: set_firewall
+      vars:
+        set_firewall_ssh_port: "{{ ssh_port }}"
+    - role: set_ssh
+      vars:
+        set_ssh_port: "{{ ssh_port }}"
+    - role: set_motd

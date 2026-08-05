@@ -1,38 +1,46 @@
 ---
-# === Users ===
-sudo_users:
+# === Глобальные системные настройки (используются как Playbook Vars) ===
+ssh_port: 22
+
+# === Роль: set_users ===
+set_users_sudo:
   - name: dauxdu
     ssh_public_key: |
       ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJ9pqriGF4LIh513DwUZEIbhdhekefLD6Z1wS7F7Sp0M vsfi-dauxdu
       ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEOGmVpn7RAatSVvctYDrWkCEFPU3CeQoswqIIPzF/U9
   - name: nikitaslipenchuk
-    ssh_public_key: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHwzuTrxNLxECMBKNA5Or3DfjoShBZjL1J4yrZ0LsYhp vsfi-nikitaslipenchuk"
+    ssh_public_key: |
+      ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHwzuTrxNLxECMBKNA5Or3DfjoShBZjL1J4yrZ0LsYhp vsfi-nikitaslipenchuk
   - name: RidRapsody
-    ssh_public_key: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGJjhXUlwEqNuuQu/tDjIEYrV55BeToABnXLVAPE3DEn vsfi-RidRapsody"
+    ssh_public_key: |
+      ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGJjhXUlwEqNuuQu/tDjIEYrV55BeToABnXLVAPE3DEn vsfi-RidRapsody
   - name: quuuqq11
-    ssh_public_key: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAICh/N1TLwCkH7BZ649lzSkKAzkDTlxw3x7GviFej9suU vsfi-quuuqq11"
+    ssh_public_key: |
+      ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAICh/N1TLwCkH7BZ649lzSkKAzkDTlxw3x7GviFej9suU vsfi-quuuqq11
   - name: Kosta110606
-    ssh_public_key: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDay47CbtpZSapnbZBitFs1sAgNkaHC8i8JoWrKbYx3P vsfi-Kosta110606"
+    ssh_public_key: |
+      ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDay47CbtpZSapnbZBitFs1sAgNkaHC8i8JoWrKbYx3P vsfi-Kosta110606
 
-deploy_users:
+set_users_deploy:
   - name: deployer
-    ssh_public_key: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIA9SeNAhdyLbRJzqmHm2oWRu3auNLLjfJ1Xo+xnn4kNx vsfi-deployer"
-
-# === Firewall ===
-ssh_port: 22
+    ssh_public_key: |
+      ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIA9SeNAhdyLbRJzqmHm2oWRu3auNLLjfJ1Xo+xnn4kNx vsfi-deployer
 
 # === Domain ===
 domain: "vsfi.team"
 subdomain: "team01"
 fulldomain: "{{ subdomain }}.{{ domain }}"
 
-# === Docker ===
-docker_registries:
+# === Роль: set_docker ===
+set_docker_sudo: "{{ set_users_sudo }}"
+set_docker_deploy: "{{ set_users_deploy }}"
+set_docker_registries:
   - "registry.{{ fulldomain }}"
-docker_username: gitlab-ci
-docker_password: "{{ vault_docker_password }}"
+set_docker_username: gitlab-ci
+set_docker_password: "{{ vault_docker_password }}"
 
-docker_overlay_networks:
+# === Роль: set_docker_network ===
+set_docker_network_overlay:
   - name: traefik-public
     encrypted: false
   - name: grafana-internal
@@ -48,27 +56,23 @@ docker_overlay_networks:
     encrypted: true
     internal: true
 
-# === Vault ===
+# === Роль: deploy-hashicorp-vault ===
 vault_domain: "vault.{{ fulldomain }}"
 vault_allowed_domain: "{{ fulldomain }}"
 vault_role_name: "team01"
-
-# PKI configuration
 vault_root_pki: "pki-root"
 vault_int_pki: "pki-int"
-
-# TTL settings
 vault_cert_ttl: "720h" # 30 days
 vault_default_lease_ttl: "168h" # 7 days
 vault_max_lease_ttl: "720h" # 30 days
 
-# === Portainer ===
+# === Роль: deploy-portainer ===
 portainer_domain: "prt.{{ fulldomain }}"
 
-# === PostgreSQL ===
+# === Роль: deploy-postgres ===
 postgres_password: "{{ vault_postgres_password }}"
 
-# === Keycloak ===
+# === Роль: deploy-keycloak ===
 keycloak_db: "keycloak"
 keycloak_db_user: "keycloak"
 keycloak_db_password: "{{ vault_keycloak_db_password }}"
@@ -85,22 +89,22 @@ keycloak_realm_viewer_users:
   - quuuqq11
   - Kosta110606
 
-# === Grafana OAuth ===
+# === Роль: deploy-grafana ===
 grafana_oauth_id: "grafana-oauth"
 grafana_oauth_secret: "{{ vault_grafana_oauth_secret }}"
 grafana_domain: "gr.{{ fulldomain }}"
 
-# === LGTM ===
+# === LGTM Стек (deploy-prometheus, deploy-loki, deploy-tempo) ===
 prometheus_domain: "prom.{{ fulldomain }}"
 loki_domain: "loki.{{ fulldomain }}"
 tempo_domain: "tempo.{{ fulldomain }}"
 
-# === Alertmanager ===
+# === Роль: deploy-alertmanager ===
 alertmanager_domain: "alert.{{ fulldomain }}"
 telegram_bot_token: "{{ vault_telegram_bot_token }}"
 telegram_chat_id: 536988073
 
-# === Blackbox Exporter ===
+# === Роль: deploy-blackbox-exporter ===
 blackbox_tls_targets:
   - "{{ fulldomain }}:443"
   - "{{ vault_domain }}:443"
@@ -115,7 +119,6 @@ blackbox_tls_targets:
   - "{{ nexus_domain }}:443"
   - "{{ nexus_registry_domain }}:443"
 
-# Домены для HTTP-проверок
 blackbox_http_targets:
   - "https://{{ fulldomain }}"
   - "https://{{ vault_domain }}"
@@ -127,12 +130,12 @@ blackbox_http_targets:
   - "https://{{ rustfs_domain }}"
   - "https://{{ nexus_domain }}"
 
-# === GitLab ===
+# === GitLab (deploy-gitlab-standalone, deploy-gitlab-runner) ===
 gitlab_domain: "git.{{ fulldomain }}"
 gitlab_root_password: "{{ vault_gitlab_root_password }}"
 gitlab_runner_token: "{{ vault_gitlab_runner_token }}"
 
-# === RustFS / S3 ===
+# === Роль: deploy-rustfs (S3) ===
 rustfs_domain: "s3.{{ fulldomain }}"
 rustfs_user: "dauxdu"
 rustfs_password: "{{ vault_rustfs_password }}"
@@ -141,11 +144,11 @@ s3_bucket: "postgres-backups"
 s3_access_key: "{{ rustfs_user }}"
 s3_secret_key: "{{ rustfs_password }}"
 
-# === Nexus ===
+# === Роль: deploy-nexus ===
 nexus_domain: "nexus.{{ fulldomain }}"
 nexus_registry_domain: "registry.{{ fulldomain }}"
 
-# === Backup ===
+# === Роль: deploy-postgres-backup ===
 backup_encryption_key: "{{ vault_backup_encryption_key }}"
 backup_databases:
   - "{{ keycloak_db }}"
