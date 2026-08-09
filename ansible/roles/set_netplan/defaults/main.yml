@@ -1,2 +1,10 @@
 ---
 set_netplan_config_file: "01-netcfg.yaml"
+set_netplan_interface: "eth0"
+set_netplan_dhcp: false
+set_netplan_ip_address: "192.168.1.200"
+set_netplan_subnet_mask: 24
+set_netplan_gateway: "192.168.1.1"
+set_netplan_dns_servers:
+  - "1.1.1.1"
+  - "8.8.8.8"
