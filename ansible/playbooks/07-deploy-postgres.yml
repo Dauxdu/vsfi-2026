@@ -3,4 +3,4 @@
   hosts: db
   gather_facts: true
   roles:
-    - role: deploy-postgres
+    - role: deploy_postgres

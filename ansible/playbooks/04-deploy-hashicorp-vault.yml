@@ -1,6 +1,0 @@
----
-- name: Deploy HashiCorp Vault
-  hosts: mgmt
-  gather_facts: true
-  roles:
-    - role: deploy-hashicorp-vault

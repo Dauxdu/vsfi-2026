@@ -1,0 +1,18 @@
+---
+- name: Create Vault directories
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    mode: "0755"
+    owner: root
+    group: root
+  loop:
+    - "{{ vault_data_path | dirname }}"
+    - "{{ vault_data_path }}/certs"
+
+- name: Deploy Vault stack
+  ansible.builtin.include_role:
+    name: deploy_docker_stack
+  vars:
+    stack_name: vault
+    stack_compose_path: "{{ vault_data_path }}/compose.yml"

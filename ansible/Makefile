@@ -9,7 +9,7 @@ help:
 	@echo "  setup-docker-swarm     - Setup Docker Swarm"
 	@echo "  deploy-traefik         - Deploy Traefik"
 	@echo "  deploy-portainer       - Deploy Portainer"
-	@echo "  deploy-hashicorp-vault - Deploy HashiCorp Vault"
+	@echo "  deploy-vault           - Deploy HashiCorp Vault"
 	@echo "  deploy-lgtm            - Deploy LGTM stack"
 	@echo "  graph                  - Show inventory graph"
 
@@ -46,9 +46,9 @@ setup-docker:
 setup-docker-swarm:
 	ansible-playbook $(PLAYBOOK_DIR)/03-setup-docker-swarm.yml
 
-.PHONY: deploy-hashicorp-vault
-deploy-hashicorp-vault:
-	ansible-playbook $(PLAYBOOK_DIR)/04-deploy-hashicorp-vault.yml
+.PHONY: deploy-vault
+deploy-vault:
+	ansible-playbook $(PLAYBOOK_DIR)/04-deploy-vault.yml
 
 .PHONY: deploy-portainer
 deploy-portainer:

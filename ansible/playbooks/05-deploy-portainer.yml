@@ -3,4 +3,4 @@
   hosts: mgmt
   gather_facts: true
   roles:
-    - role: deploy-portainer
+    - role: deploy_portainer

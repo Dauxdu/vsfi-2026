@@ -3,4 +3,4 @@
   hosts: mgmt
   gather_facts: true
   roles:
-    - role: deploy-keycloak
+    - role: deploy_keycloak

@@ -1,0 +1,187 @@
+---
+- name: Get enabled mounts
+  ansible.builtin.uri:
+    url: "http://127.0.0.1:{{ vault_port }}/v1/sys/mounts"
+    method: GET
+    headers:
+      X-Vault-Token: "{{ vault_token }}"
+  register: vault_mounts
+
+# === ROOT CA ===
+- name: Enable Root PKI engine
+  ansible.builtin.uri:
+    url: "http://127.0.0.1:{{ vault_port }}/v1/sys/mounts/{{ vault_root_pki }}"
+    method: POST
+    headers:
+      X-Vault-Token: "{{ vault_token }}"
+    body_format: json
+    body:
+      type: "pki"
+      config:
+        max_lease_ttl: "{{ vault_root_ttl }}"
+    status_code: [200, 204]
+  when: (vault_root_pki ~ '/') not in vault_mounts.json
+
+- name: Check Root CA existence
+  ansible.builtin.uri:
+    url: "http://127.0.0.1:{{ vault_port }}/v1/{{ vault_root_pki }}/issuers?list=true"
+    method: GET
+    headers:
+      X-Vault-Token: "{{ vault_token }}"
+    status_code: [200, 404]
+  register: root_issuers
+
+- name: Generate Root CA
+  ansible.builtin.uri:
+    url: "http://127.0.0.1:{{ vault_port }}/v1/{{ vault_root_pki }}/root/generate/internal"
+    method: POST
+    headers:
+      X-Vault-Token: "{{ vault_token }}"
+    body_format: json
+    body:
+      common_name: "{{ vault_root_common_name }}"
+      ttl: "{{ vault_root_ttl }}"
+      issuer_name: "root-ca"
+    status_code: [200, 204]
+  when: root_issuers.status == 404 or (root_issuers.json.data['keys'] | default([]) | length == 0)
+
+- name: Configure Root CA URLs (AIA)
+  ansible.builtin.uri:
+    url: "http://127.0.0.1:{{ vault_port }}/v1/{{ vault_root_pki }}/config/urls"
+    method: POST
+    headers:
+      X-Vault-Token: "{{ vault_token }}"
+    body_format: json
+    body:
+      issuing_certificates: "https://{{ vault_domain }}/v1/{{ vault_root_pki }}/ca"
+      crl_distribution_points: "https://{{ vault_domain }}/v1/{{ vault_root_pki }}/crl"
+    status_code: [200, 204]
+
+- name: Download Root CA public certificate
+  ansible.builtin.get_url:
+    url: "http://127.0.0.1:{{ vault_port }}/v1/{{ vault_root_pki }}/ca/pem"
+    dest: "{{ vault_data_path }}/certs/root-ca.crt"
+    mode: "0644"
+
+# === Распространение CA на ВСЕ хосты ===
+- name: Read Vault Root CA certificate
+  ansible.builtin.slurp:
+    src: "{{ vault_data_path }}/certs/root-ca.crt"
+  register: vault_root_ca_content
+
+- name: Install Vault Root CA into system trust store on all hosts
+  ansible.builtin.copy:
+    content: "{{ vault_root_ca_content.content | b64decode }}"
+    dest: /usr/local/share/ca-certificates/vault-root-ca.crt
+    owner: root
+    group: root
+    mode: "0644"
+  delegate_to: "{{ item }}"
+  loop: "{{ groups['all'] }}"
+  notify: Update CA certificates on all hosts
+
+# === INTERMEDIATE CA ===
+- name: Enable Intermediate PKI engine
+  ansible.builtin.uri:
+    url: "http://127.0.0.1:{{ vault_port }}/v1/sys/mounts/{{ vault_int_pki }}"
+    method: POST
+    headers:
+      X-Vault-Token: "{{ vault_token }}"
+    body_format: json
+    body:
+      type: "pki"
+      config:
+        max_lease_ttl: "{{ vault_int_ttl }}"
+    status_code: [200, 204]
+  when: (vault_int_pki ~ '/') not in vault_mounts.json
+
+- name: Check Intermediate CA existence
+  ansible.builtin.uri:
+    url: "http://127.0.0.1:{{ vault_port }}/v1/{{ vault_int_pki }}/issuers?list=true"
+    method: GET
+    headers:
+      X-Vault-Token: "{{ vault_token }}"
+    status_code: [200, 404]
+  register: int_issuers
+
+- name: Generate and Configure Intermediate CA
+  when: int_issuers.status == 404 or (int_issuers.json.data['keys'] | default([]) | length == 0)
+  block:
+    - name: Generate Intermediate CSR
+      ansible.builtin.uri:
+        url: "http://127.0.0.1:{{ vault_port }}/v1/{{ vault_int_pki }}/intermediate/generate/internal"
+        method: POST
+        headers:
+          X-Vault-Token: "{{ vault_token }}"
+        body_format: json
+        body:
+          common_name: "{{ vault_intermediate_common_name }}"
+          issuer_name: "int-ca"
+        status_code: [200, 204]
+      register: int_csr_result
+
+    - name: Sign Intermediate CSR with Root CA
+      ansible.builtin.uri:
+        url: "http://127.0.0.1:{{ vault_port }}/v1/{{ vault_root_pki }}/root/sign-intermediate"
+        method: POST
+        headers:
+          X-Vault-Token: "{{ vault_token }}"
+        body_format: json
+        body:
+          issuer_ref: "root-ca"
+          csr: "{{ int_csr_result.json.data.csr }}"
+          format: "pem_bundle"
+          ttl: "{{ vault_int_ttl }}"
+        status_code: [200, 204]
+      register: signed_int_result
+
+    - name: Import Signed Intermediate Certificate
+      ansible.builtin.uri:
+        url: "http://127.0.0.1:{{ vault_port }}/v1/{{ vault_int_pki }}/intermediate/set-signed"
+        method: POST
+        headers:
+          X-Vault-Token: "{{ vault_token }}"
+        body_format: json
+        body:
+          certificate: "{{ signed_int_result.json.data.certificate }}"
+        status_code: [200, 204]
+
+- name: Configure Intermediate CA URLs (AIA)
+  ansible.builtin.uri:
+    url: "http://127.0.0.1:{{ vault_port }}/v1/{{ vault_int_pki }}/config/urls"
+    method: POST
+    headers:
+      X-Vault-Token: "{{ vault_token }}"
+    body_format: json
+    body:
+      issuing_certificates: "https://{{ vault_domain }}/v1/{{ vault_int_pki }}/ca"
+      crl_distribution_points: "https://{{ vault_domain }}/v1/{{ vault_int_pki }}/crl"
+    status_code: [200, 204]
+
+# === ROLE ===
+- name: Check Role existence
+  ansible.builtin.uri:
+    url: "http://127.0.0.1:{{ vault_port }}/v1/{{ vault_int_pki }}/roles/{{ vault_role_name }}"
+    method: GET
+    headers:
+      X-Vault-Token: "{{ vault_token }}"
+    status_code: [200, 404]
+  register: role_check
+
+- name: Create Role for Intermediate CA
+  ansible.builtin.uri:
+    url: "http://127.0.0.1:{{ vault_port }}/v1/{{ vault_int_pki }}/roles/{{ vault_role_name }}"
+    method: POST
+    headers:
+      X-Vault-Token: "{{ vault_token }}"
+    body_format: json
+    body:
+      issuer_ref: "default"
+      allowed_domains:
+        - "{{ vault_allowed_domain }}"
+      allow_bare_domains: true
+      allow_subdomains: true
+      allow_wildcard_certificates: true
+      max_ttl: "{{ vault_cert_ttl }}"
+    status_code: [200, 204]
+  when: role_check.status == 404

@@ -3,10 +3,10 @@
   hosts: cicd
   gather_facts: true
   roles:
-    - role: deploy-gitlab-standalone
+    - role: deploy_gitlab_standalone
 
 - name: Deploy GitLab Runner for Docker Buildx
   hosts: cicd
   gather_facts: true
   roles:
-    - role: deploy-gitlab-runner
+    - role: deploy_gitlab_runner

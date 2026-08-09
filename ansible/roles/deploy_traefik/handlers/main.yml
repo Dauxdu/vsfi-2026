@@ -1,0 +1,6 @@
+---
+- name: Restart traefik stack
+  ansible.builtin.command:
+    cmd: docker service update --force traefik_traefik
+  delegate_to: "{{ groups['swarm_managers'][0] }}"
+  changed_when: true

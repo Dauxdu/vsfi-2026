@@ -9,7 +9,7 @@
   ansible.builtin.import_playbook: 03-setup-docker-swarm.yml
 
 - name: Import HashiCorp Vault Deploy Playbook
-  ansible.builtin.import_playbook: 04-deploy-hashicorp-vault.yml
+  ansible.builtin.import_playbook: 04-deploy-vault.yml
 
 - name: Import Portainer Deploy Playbook
   ansible.builtin.import_playbook: 05-deploy-portainer.yml

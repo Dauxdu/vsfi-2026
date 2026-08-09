@@ -3,23 +3,23 @@
   hosts: all
   gather_facts: true
   roles:
-    - role: deploy-node-exporter
-    - role: deploy-promtail
+    - role: deploy_node_exporter
+    - role: deploy_promtail
 
 - name: Deploy LGTM stack on monitoring node
   hosts: mntr
   gather_facts: true
   roles:
-    - role: deploy-grafana
-    - role: deploy-prometheus
-    - role: deploy-alertmanager
-    - role: deploy-loki
-    # - role: deploy-tempo
-    - role: deploy-blackbox-exporter
+    - role: deploy_grafana
+    - role: deploy_prometheus
+    - role: deploy_alertmanager
+    - role: deploy_loki
+    # - role: deploy_tempo
+    - role: deploy_blackbox_exporter
 
 - name: Deploy cAdvisor from Swarm manager
   hosts: mgmt
   gather_facts: false
   roles:
-    - role: deploy-cadvisor
-    - role: deploy-nginx-exporter
+    - role: deploy_cadvisor
+    - role: deploy_nginx_exporter

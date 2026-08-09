@@ -1,0 +1,15 @@
+---
+- name: Verify Vault is unsealed
+  ansible.builtin.uri:
+    url: "http://127.0.0.1:{{ vault_port }}/v1/sys/seal-status"
+    method: GET
+    status_code: [200]
+  register: deploy_vault_final_seal_status
+  failed_when: deploy_vault_final_seal_status.json.sealed
+
+- name: Update CA certificates on all hosts
+  ansible.builtin.command:
+    cmd: update-ca-certificates
+  delegate_to: "{{ item }}"
+  loop: "{{ groups['all'] }}"
+  changed_when: true

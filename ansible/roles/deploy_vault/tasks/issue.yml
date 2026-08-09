@@ -1,0 +1,91 @@
+---
+- name: Create certs directory
+  ansible.builtin.file:
+    path: "{{ vault_data_path }}/certs"
+    state: directory
+    mode: "0755"
+    owner: root
+    group: root
+
+- name: Check if initial certificate exists
+  ansible.builtin.stat:
+    path: "{{ vault_data_path }}/certs/{{ vault_allowed_domain }}.crt"
+  register: cert_file
+
+- name: Check certificate expiration
+  ansible.builtin.shell: |
+    openssl x509 -in {{ vault_data_path }}/certs/{{ vault_allowed_domain }}.crt -checkend 864000 -noout
+  register: cert_validity
+  failed_when: false
+  changed_when: false
+  when: cert_file.stat.exists
+
+- name: Issue universal certificate (Apex + Wildcard)
+  ansible.builtin.uri:
+    url: "http://127.0.0.1:{{ vault_port }}/v1/{{ vault_int_pki }}/issue/{{ vault_role_name }}"
+    method: POST
+    headers:
+      X-Vault-Token: "{{ vault_token }}"
+    body_format: json
+    body:
+      common_name: "{{ vault_allowed_domain }}"
+      alt_names: "{{ vault_allowed_domain }},*.{{ vault_allowed_domain }}"
+      ttl: "{{ vault_cert_ttl }}"
+      format: "pem"
+      private_key_format: "pem"
+      exclude_cn_from_sans: true
+    status_code: [200]
+  register: issued_cert
+  when: not cert_file.stat.exists or (cert_file.stat.exists and cert_validity.rc != 0)
+  no_log: true
+
+# === ATOMIC WRITE ===
+- name: Create temporary directory for new certs
+  ansible.builtin.file:
+    path: "/tmp/vault"
+    state: directory
+    mode: "0755"
+    owner: root
+    group: root
+  when: issued_cert.json is defined
+
+- name: Save Fullchain (Certificate + CA Chain) to temp
+  ansible.builtin.copy:
+    content: "{{ issued_cert.json.data.certificate }}\n{{ issued_cert.json.data.ca_chain | join('\n') }}"
+    dest: "/tmp/vault/{{ vault_allowed_domain }}.crt"
+    mode: "0644"
+  when: issued_cert.json is defined
+
+- name: Save issued private key to temp
+  ansible.builtin.copy:
+    content: "{{ issued_cert.json.data.private_key }}"
+    dest: "/tmp/vault/{{ vault_allowed_domain }}.key"
+    mode: "0600"
+  when: issued_cert.json is defined
+
+- name: Verify key matches certificate before applying
+  ansible.builtin.shell: |
+    set -euo pipefail
+    cert_pub=$(openssl x509 -noout -pubkey -in /tmp/vault/{{ vault_allowed_domain }}.crt)
+    key_pub=$(openssl pkey -pubout -in /tmp/vault/{{ vault_allowed_domain }}.key)
+    if [ "$cert_pub" != "$key_pub" ]; then
+      echo "Certificate and private key do not match" >&2
+      exit 1
+    fi
+  args:
+    executable: /bin/bash
+  register: key_match_check
+  changed_when: false
+  failed_when: key_match_check.rc != 0
+  when: issued_cert.json is defined
+
+- name: Replace old certs in Vault directory
+  ansible.builtin.shell: |
+    rm -f {{ vault_data_path }}/certs/{{ vault_allowed_domain }}.crt {{ vault_data_path }}/certs/{{ vault_allowed_domain }}.key
+    mv /tmp/vault/{{ vault_allowed_domain }}.crt {{ vault_data_path }}/certs/
+    mv /tmp/vault/{{ vault_allowed_domain }}.key {{ vault_data_path }}/certs/
+    rmdir /tmp/vault/
+  changed_when: true
+  when:
+    - issued_cert.json is defined
+    - key_match_check.rc | default(1) == 0

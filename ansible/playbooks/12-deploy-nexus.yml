@@ -3,4 +3,4 @@
   hosts: cicd
   gather_facts: true
   roles:
-    - role: deploy-nexus
+    - role: deploy_nexus

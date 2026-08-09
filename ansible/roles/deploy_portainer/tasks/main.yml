@@ -1,0 +1,15 @@
+---
+- name: Create Portainer directory
+  ansible.builtin.file:
+    path: "{{ portainer_data_path }}"
+    state: directory
+    mode: "0755"
+    owner: root
+    group: root
+
+- name: Deploy Portainer stack
+  ansible.builtin.include_role:
+    name: deploy_docker_stack
+  vars:
+    stack_name: portainer
+    stack_compose_path: "{{ portainer_data_path }}/compose.yml"

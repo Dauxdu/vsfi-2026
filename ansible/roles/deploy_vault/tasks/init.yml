@@ -1,0 +1,112 @@
+---
+- name: Wait for Vault to be ready
+  ansible.builtin.uri:
+    url: "http://127.0.0.1:{{ vault_port }}/v1/sys/health"
+    method: GET
+    status_code: [200, 429, 472, 473, 501, 503]
+  register: vault_health
+  until: vault_health.status in [200, 429, 472, 473, 501, 503]
+  retries: 30
+  delay: 5
+
+- name: Check Vault initialization status
+  ansible.builtin.uri:
+    url: "http://127.0.0.1:{{ vault_port }}/v1/sys/init"
+    method: GET
+    status_code: [200, 429, 472, 473, 501, 503]
+  register: vault_init_status
+  until: vault_init_status.status in [200, 429, 472, 473, 501, 503]
+  retries: 30
+  delay: 5
+
+- name: Initialize Vault (First run only)
+  ansible.builtin.uri:
+    url: "http://127.0.0.1:{{ vault_port }}/v1/sys/init"
+    method: POST
+    body_format: json
+    body:
+      secret_shares: 1
+      secret_threshold: 1
+    status_code: [200]
+  register: vault_init_result
+  when: vault_init_status.json is defined and not vault_init_status.json.initialized
+
+- name: Save Vault keys to disk
+  ansible.builtin.copy:
+    content: "{{ vault_init_result.json | to_nice_json }}"
+    dest: "{{ vault_data_path }}/vault_keys.json"
+    owner: root
+    group: root
+    mode: "0400"
+  when:
+    - vault_init_result is defined
+    - vault_init_result is not skipped
+    - vault_init_result.json is defined
+  no_log: true
+
+# === Credentials ===
+- name: Set Vault credentials from new initialization
+  ansible.builtin.set_fact:
+    vault_token: "{{ vault_init_result.json.root_token }}"
+    vault_unseal_key: "{{ vault_init_result.json.keys_base64[0] }}"
+  when:
+    - vault_init_result is defined
+    - vault_init_result is not skipped
+    - vault_init_result.json is defined
+    - vault_init_result.json.root_token is defined
+  no_log: true
+
+- name: Load existing Vault keys if already initialized
+  when:
+    - vault_init_status.json is defined
+    - vault_init_status.json.initialized | default(false)
+    - vault_init_result is skipped or (vault_init_result is defined and not (vault_init_result.json is defined))
+  no_log: true
+  block:
+    - name: Check if vault_keys.json exists
+      ansible.builtin.stat:
+        path: "{{ vault_data_path }}/vault_keys.json"
+      register: vault_keys_file_stat
+
+    - name: Fail if vault_keys.json is missing
+      ansible.builtin.fail:
+        msg: "Vault is initialized but {{ vault_data_path }}/vault_keys.json is missing"
+      when: not vault_keys_file_stat.stat.exists
+
+    - name: Read Vault keys from disk
+      ansible.builtin.slurp:
+        src: "{{ vault_data_path }}/vault_keys.json"
+      register: vault_keys_file
+
+    - name: Set Vault credentials from existing file
+      ansible.builtin.set_fact:
+        vault_token: "{{ (vault_keys_file.content | b64decode | from_json).root_token }}"
+        vault_unseal_key: "{{ (vault_keys_file.content | b64decode | from_json).keys_base64[0] }}"
+# === Unseal ===
+- name: Check Vault seal status
+  ansible.builtin.uri:
+    url: "http://127.0.0.1:{{ vault_port }}/v1/sys/seal-status"
+    method: GET
+    status_code: [200, 503]
+  register: vault_seal_status
+  until: vault_seal_status.status == 200
+  retries: 30
+  delay: 5
+
+- name: Unseal Vault
+  ansible.builtin.uri:
+    url: "http://127.0.0.1:{{ vault_port }}/v1/sys/unseal"
+    method: POST
+    body_format: json
+    body:
+      key: "{{ vault_unseal_key }}"
+    status_code: [200]
+  when:
+    - vault_seal_status.json is defined
+    - vault_seal_status.json.sealed | default(false)
+    - vault_unseal_key is defined
+  register: unseal_result
+  retries: 3
+  delay: 2
+  until: unseal_result is not failed
+  notify: Verify Vault is unsealed
