@@ -105,20 +105,6 @@ telegram_bot_token: "{{ vault_telegram_bot_token }}"
 telegram_chat_id: 536988073
 
 # === Роль: deploy-blackbox-exporter ===
-blackbox_tls_targets:
-  - "{{ fulldomain }}:443"
-  - "{{ vault_domain }}:443"
-  - "{{ portainer_domain }}:443"
-  - "{{ keycloak_domain }}:443"
-  - "{{ grafana_domain }}:443"
-  - "{{ prometheus_domain }}:443"
-  - "{{ loki_domain }}:443"
-  - "{{ alertmanager_domain }}:443"
-  - "{{ gitlab_domain }}:443"
-  - "{{ rustfs_domain }}:443"
-  - "{{ nexus_domain }}:443"
-  - "{{ nexus_registry_domain }}:443"
-
 blackbox_http_targets:
   - "https://{{ fulldomain }}"
   - "https://{{ vault_domain }}"
