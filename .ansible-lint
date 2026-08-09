@@ -1,8 +1,6 @@
 ---
 profile: production
-
 strict: false
-
 exclude_paths:
   - .git/
   - .github/
@@ -10,7 +8,8 @@ exclude_paths:
   - .yamllint.yml
   - .ansible-lint.yml
   - collections/
-
+skip_list:
+  - var-naming[no-role-prefix]
 warn_list:
   - command-instead-of-shell
   - no-handler
