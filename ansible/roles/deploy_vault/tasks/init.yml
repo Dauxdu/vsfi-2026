@@ -82,6 +82,7 @@
       ansible.builtin.set_fact:
         vault_token: "{{ (vault_keys_file.content | b64decode | from_json).root_token }}"
         vault_unseal_key: "{{ (vault_keys_file.content | b64decode | from_json).keys_base64[0] }}"
+
 # === Unseal ===
 - name: Check Vault seal status
   ansible.builtin.uri:

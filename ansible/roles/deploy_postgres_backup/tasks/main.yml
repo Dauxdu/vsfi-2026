@@ -32,7 +32,6 @@
     owner: root
     group: root
     mode: "0644"
-  register: vault_ca_installed
   notify: Update CA certificates
 
 - name: Configure rclone for RustFS S3
