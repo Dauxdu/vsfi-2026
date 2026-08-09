@@ -4,7 +4,7 @@ network:
   renderer: networkd
   ethernets:
     {{ set_netplan_interface }}:
-      dhcp4: {{ set_netplan_dhcp }}
+      dhcp4: {{ set_netplan_dhcp | bool | to_json }}
       addresses:
         - {{ set_netplan_ip_address }}/{{ set_netplan_subnet_mask }}
       routes:
