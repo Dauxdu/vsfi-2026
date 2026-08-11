@@ -1,7 +1,4 @@
 ---
-# === Глобальные системные настройки (используются как Playbook Vars) ===
-ssh_port: 22
-
 # === Роль: set_users ===
 set_users_sudo:
   - name: dauxdu

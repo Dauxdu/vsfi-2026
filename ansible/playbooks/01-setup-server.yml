@@ -14,8 +14,8 @@
     - role: set_users
     - role: set_firewall
       vars:
-        set_firewall_ssh_port: "{{ ssh_port }}"
+        set_firewall_ssh_port: "{{ ansible_port | default(22) }}"
     - role: set_ssh
       vars:
-        set_ssh_port: "{{ ssh_port }}"
+        set_ssh_port: "{{ ansible_port | default(22) }}"
     - role: set_motd
